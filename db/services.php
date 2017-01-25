@@ -17,25 +17,40 @@
 /**
  * Web Service local plugin functions and services definition
  * @package     db
- * @copyright   2016 Uemanet
+ * @copyright   2017 Uemanet
+ * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $functions = array(
-
     'local_integracao_create_course' => array(
-        'classname' => 'local_integracao_external',
+        'classname' => 'local_wsintegracao_course',
         'methodname' => 'create_course',
-        'classpath' => 'local/moodle-local_integracao/classes/external',
+        'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Creates a new course',
         'type' => 'write'
+    ),
+    'local_integracao_update_course' => array(
+        'classname' => 'local_wsintegracao_course',
+        'methodname' => 'update_course',
+        'classpath' => 'local/integracao/classes/course.php',
+        'description' => 'Update a course',
+        'type' => 'write'
+    ),
+    'local_integracao_create_group' => array(
+        'classname' => 'local_wsintegracao_group',
+        'methodname' => 'create_group',
+        'classpath' => 'local/integracao/classes/group.php',
+        'description' => 'Create a group',
+        'type' => 'write'
     )
-
 );
 
 $services = array(
     'Integracao' => array(
-        'functions' => array('local_integracao_create_course'),
+        'functions' => array('local_integracao_create_course',
+                             'local_integracao_update_course',
+                             'local_integracao_create_group'),
         'restrictedusers' => 0,
         'enabled' => 1
     )
