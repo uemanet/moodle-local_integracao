@@ -28,8 +28,9 @@
     <TABLE NAME="int_tutor_group" COMMENT="Tabela de tutores dos grupos" PREVIOUS="int_grupo_group" NEXT="int_pessoa_user">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false" NEXT="grp_id"/>
-        <FIELD NAME="grp_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="groupid" COMMENT="ID do grupo. acd_grupos"/>
-        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="grp_id" NEXT="pes_id" COMMENT="ID do grupo no moodle. mdl_groups"/>
+        <FIELD NAME="grp_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="courseid" COMMENT="ID do grupo. acd_grupos"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="grp_id" NEXT="groupid" COMMENT="ID do curso no moodle. mdl_groups"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="courseid" NEXT="pes_id" COMMENT="ID do grupo no moodle. mdl_groups"/>
         <FIELD NAME="pes_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="groupid" NEXT="userid" COMMENT="ID da pessoa no harpia. gra_pessoas"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="pes_id" COMMENT="ID do usuario no moodle. mdl_user"/>
       </FIELDS>

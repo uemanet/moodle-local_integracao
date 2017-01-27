@@ -28,8 +28,48 @@ class local_wsintegracao_tutor extends wsintegracao_base{
       public static function enrol_tutor($tutor) {
           global $CFG, $DB;
 
+
           // Validação dos paramêtros
-          $params = self::validate_parameters(self::enrol_tutor_parameters(), array('group' => $group));
+          $params = self::validate_parameters(self::enrol_tutor_parameters(), array('tutor' => $tutor));
+
+          // Transforma o array em objeto.
+          $tutor = (object)$tutor;
+
+          //verifica se o tutor pode ser vinculado ao grupo
+          $data = self::get_enrol_tutor_group_validation_rules($tutor);
+
+          $courseid = self::get_courseid_by_groupid($data['groupid']);
+
+          //vincula o tutor a um curso no moodle
+          self::enrol_user_in_moodle_course($data['userid'], $courseid, self::TUTOR_ROLEID);
+
+          //adiciona a bibliteca de grupos do moodle
+          require_once("{$CFG->dirroot}/group/lib.php");
+          //vincula um usuário a um grupo
+          $res = groups_add_member($data['groupid'],$data['userid']);
+
+          if ($res){
+            $tutGroup['pes_id'] = $tutor->pes_id;
+            $tutGroup['userid'] = $data['userid'];
+            $tutGroup['grp_id'] = $tutor->grp_id;
+            $tutGroup['groupid'] = $data['groupid'];
+            $tutGroup['courseid'] = $courseid;
+
+            $result = $DB->insert_record('int_tutor_group', $tutGroup);
+
+          }
+
+          // Prepara o array de retorno.
+          $returndata = null;
+          if($result) {
+              $returndata['id'] = $result->id;
+              $returndata['status'] = 'success';
+              $returndata['message'] = 'Tutor vinculado com sucesso';
+          } else {
+              $returndata['id'] = 0;
+              $returndata['status'] = 'error';
+              $returndata['message'] = 'Erro ao tentar vincular o tutor';
+          }
 
           return $returndata;
       }
@@ -51,7 +91,8 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               )
           );
       }
-      public static function enrol_tutor_returns() {
+      public static function enrol_tutor_returns()
+      {
           return new external_single_structure(
               array(
                   'id' => new external_value(PARAM_INT, 'Id'),
@@ -60,4 +101,70 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               )
           );
       }
+
+      public static function get_enrol_tutor_group_validation_rules($tutor){
+        global $CFG, $DB;
+          //verifica se o o usuário enviado pelo harpia, existe no moodle
+          $userid = self::get_user_by_pes_id($tutor->pes_id);
+
+          //se ele não existir, criar o usuário e adicioná-lo na tabela de controle
+          if(!$userid){
+
+            $userid = self::save_user($tutor);
+
+            $data['pes_id'] = $tutor->pes_id;
+            $data['userid'] = $userid;
+
+            $res = $DB->insert_record('int_pessoa_user', $data);
+          }
+
+          //verifica se o grupo existe
+          $groupid = self::get_group_by_grp_id($tutor->grp_id);
+
+          // Dispara uma excessao caso o grupo com grp_id informado não exista
+          if(!$groupid) {
+            throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$tutor->grp_id);
+          }
+
+          //verifica se o tutor pode ser vinculado ao grupo
+          $tutGroup = $DB->get_record('int_tutor_group', array('pes_id' => $tutor->pes_id, 'groupid' => $groupid), '*');
+          if ($tutGroup) {
+            throw new Exception("O tutor de pes_id " .$tutor->pes_id. " já está vinculado ao grupo de groupid ".$groupid);
+          }
+          $result['userid'] = $userid;
+          $result['groupid'] = $groupid;
+
+          return $result;
+
+      }
+
+        protected static function get_course_enrol($courseid) {
+          global $DB;
+
+          $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+
+          return $enrol;
+      }
+
+      protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
+        global $CFG;
+
+        $courseenrol = self::get_course_enrol($courseid);
+
+        require_once($CFG->libdir . "/enrollib.php");
+
+        if (!$enrol_manual = enrol_get_plugin('manual')) {
+            throw new coding_exception('Can not instantiate enrol_manual');
+        }
+
+        $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
+    }
+
+    protected static function get_courseid_by_groupid($groupid){
+      global $DB;
+
+      $group = $DB->get_record('groups', array('id' => $groupid), '*');
+
+      return $group->courseid;
+    }
 }
