@@ -110,4 +110,34 @@ class wsintegracao_base extends external_api
         return $userid;
     }
 
+    protected static function get_course_enrol($courseid) {
+      global $DB;
+
+      $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+
+      return $enrol;
+    }
+
+    protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
+      global $CFG;
+
+      $courseenrol = self::get_course_enrol($courseid);
+
+      require_once($CFG->libdir . "/enrollib.php");
+
+      if (!$enrol_manual = enrol_get_plugin('manual')) {
+          throw new coding_exception('Can not instantiate enrol_manual');
+      }
+
+      $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
+    }
+
+    protected static function get_courseid_by_groupid($groupid){
+      global $DB;
+
+      $group = $DB->get_record('groups', array('id' => $groupid), '*');
+
+      return $group->courseid;
+    }
+
 }

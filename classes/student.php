@@ -15,7 +15,7 @@
 // along with wsintegracao.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class local_wsintegracao_course
+ * Class local_wsintegracao_student
  * @copyright   2017 Uemanet
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -23,19 +23,19 @@
 
 require_once("base.php");
 
-class local_wsintegracao_tutor extends wsintegracao_base{
+class local_wsintegracao_student extends wsintegracao_base{
 
-      public static function enrol_tutor($tutor) {
+      public static function enrol_student($student) {
           global $CFG, $DB;
 
           // Validação dos paramêtros
-          $params = self::validate_parameters(self::enrol_tutor_parameters(), array('tutor' => $tutor));
+          $params = self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
 
           // Transforma o array em objeto.
-          $tutor = (object)$tutor;
+          $student = (object)$student;
 
-          //verifica se o tutor pode ser vinculado ao grupo
-          $data = self::get_enrol_tutor_group_validation_rules($tutor);
+          //verifica se o aluno pode ser matriculado no curso
+          $data = self::get_enrol_student_course_validation_rules($tutor);
 
           $courseid = self::get_courseid_by_groupid($data['groupid']);
 
@@ -78,11 +78,13 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
           return $returndata;
       }
-      public static function enrol_tutor_parameters() {
+      public static function enrol_students_parameters() {
           return new external_function_parameters(
               array(
                   'tutor' => new external_single_structure(
                       array(
+                          'mat_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
+                          'trm_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
                           'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
                           'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
                           'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do tutor'),
@@ -97,7 +99,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
           );
       }
 
-      public static function enrol_tutor_returns()
+      public static function enrol_student_returns()
       {
           return new external_single_structure(
               array(
@@ -144,5 +146,35 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
           return $result;
 
+      }
+
+      protected static function get_course_enrol($courseid) {
+        global $DB;
+
+        $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+
+        return $enrol;
+      }
+
+      protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
+        global $CFG;
+
+        $courseenrol = self::get_course_enrol($courseid);
+
+        require_once($CFG->libdir . "/enrollib.php");
+
+        if (!$enrol_manual = enrol_get_plugin('manual')) {
+            throw new coding_exception('Can not instantiate enrol_manual');
+        }
+
+        $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
+      }
+
+      protected static function get_courseid_by_groupid($groupid){
+        global $DB;
+
+        $group = $DB->get_record('groups', array('id' => $groupid), '*');
+
+        return $group->courseid;
       }
 }
