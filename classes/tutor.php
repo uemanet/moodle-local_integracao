@@ -28,7 +28,6 @@ class local_wsintegracao_tutor extends wsintegracao_base{
       public static function enrol_tutor($tutor) {
           global $CFG, $DB;
 
-
           // Validação dos paramêtros
           $params = self::validate_parameters(self::enrol_tutor_parameters(), array('tutor' => $tutor));
 
@@ -39,6 +38,9 @@ class local_wsintegracao_tutor extends wsintegracao_base{
           $data = self::get_enrol_tutor_group_validation_rules($tutor);
 
           $courseid = self::get_courseid_by_groupid($data['groupid']);
+
+          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+          $transaction = $DB->start_delegated_transaction();
 
           //vincula o tutor a um curso no moodle
           self::enrol_user_in_moodle_course($data['userid'], $courseid, self::TUTOR_ROLEID);
@@ -71,6 +73,9 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               $returndata['message'] = 'Erro ao tentar vincular o tutor';
           }
 
+          // Persiste as operacoes em caso de sucesso.
+          $transaction->allow_commit();
+
           return $returndata;
       }
       public static function enrol_tutor_parameters() {
@@ -91,6 +96,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               )
           );
       }
+
       public static function enrol_tutor_returns()
       {
           return new external_single_structure(
@@ -131,6 +137,8 @@ class local_wsintegracao_tutor extends wsintegracao_base{
           if ($tutGroup) {
             throw new Exception("O tutor de pes_id " .$tutor->pes_id. " já está vinculado ao grupo de groupid ".$groupid);
           }
+
+          //prepara o array de retorno
           $result['userid'] = $userid;
           $result['groupid'] = $groupid;
 
@@ -138,12 +146,12 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
       }
 
-        protected static function get_course_enrol($courseid) {
-          global $DB;
+      protected static function get_course_enrol($courseid) {
+        global $DB;
 
-          $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+        $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
 
-          return $enrol;
+        return $enrol;
       }
 
       protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
@@ -158,13 +166,13 @@ class local_wsintegracao_tutor extends wsintegracao_base{
         }
 
         $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
-    }
+      }
 
-    protected static function get_courseid_by_groupid($groupid){
-      global $DB;
+      protected static function get_courseid_by_groupid($groupid){
+        global $DB;
 
-      $group = $DB->get_record('groups', array('id' => $groupid), '*');
+        $group = $DB->get_record('groups', array('id' => $groupid), '*');
 
-      return $group->courseid;
-    }
+        return $group->courseid;
+      }
 }

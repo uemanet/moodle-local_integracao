@@ -50,6 +50,13 @@ $functions = array(
         'classpath' => 'local/integracao/classes/tutor.php',
         'description' => 'Enrol a tutor',
         'type' => 'write'
+    ),
+    'ping' => array(
+        'classname' => 'local_wsintegracao_tutor',
+        'methodname' => 'ping',
+        'classpath' => 'local/integracao/classes/ping.php',
+        'description' => 'Ping function',
+        'type' => 'read'
     )
 );
 
