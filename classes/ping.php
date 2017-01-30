@@ -7,7 +7,7 @@
  * @copyright 2017 Uemanet
  * @author    Uemanet
  */
-class local_integracao_ping extends external_api
+class local_wsintegracao_ping extends external_api
 {
     public static function ping_parameters()
     {

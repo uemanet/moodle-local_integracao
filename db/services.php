@@ -52,7 +52,7 @@ $functions = array(
         'type' => 'write'
     ),
     'ping' => array(
-        'classname' => 'local_wsintegracao_tutor',
+        'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
         'description' => 'Ping function',
@@ -65,7 +65,8 @@ $services = array(
         'functions' => array('local_integracao_create_course',
                              'local_integracao_update_course',
                              'local_integracao_create_group',
-                             'local_integracao_enrol_tutor'),
+                             'local_integracao_enrol_tutor',
+                             'ping'),
         'restrictedusers' => 0,
         'enabled' => 1
     )
