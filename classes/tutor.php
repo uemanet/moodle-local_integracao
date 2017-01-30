@@ -83,6 +83,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               array(
                   'tutor' => new external_single_structure(
                       array(
+                          'ttg_tipo_tutoria' => new external_value(PARAM_TEXT, 'Tipo de tutoria do tutor'),
                           'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
                           'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
                           'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do tutor'),

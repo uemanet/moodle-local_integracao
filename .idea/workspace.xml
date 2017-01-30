@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6ca3486d-578e-4056-b23d-a4bb14ebef99" name="Default" comment="" />
+    <list default="true" id="6ca3486d-578e-4056-b23d-a4bb14ebef99" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/classes/student.php" afterPath="$PROJECT_DIR$/classes/student.php" />
+    </list>
     <ignored path="integracao.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -106,7 +108,7 @@
     <option name="totallyTimeSpent" value="632000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="0" width="1922" height="1041" extended-state="7" />
+    <frame x="-1" y="0" width="1922" height="1041" extended-state="6" />
     <editor active="false" />
     <layout>
       <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />

@@ -27,6 +27,7 @@ require_once($CFG->libdir . "/externallib.php");
 class wsintegracao_base extends external_api
 {
   const TUTOR_ROLEID = 4;
+  const STUDENT_ROLEID = 5;
 
         protected static function get_course_by_trm_id($trm_id)
         {
