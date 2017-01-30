@@ -43,6 +43,20 @@ $functions = array(
         'classpath' => 'local/integracao/classes/group.php',
         'description' => 'Create a group',
         'type' => 'write'
+    ),
+    'local_integracao_enrol_tutor' => array(
+        'classname' => 'local_wsintegracao_tutor',
+        'methodname' => 'enrol_tutor',
+        'classpath' => 'local/integracao/classes/tutor.php',
+        'description' => 'Enrol a tutor',
+        'type' => 'write'
+    ),
+    'ping' => array(
+        'classname' => 'local_wsintegracao_tutor',
+        'methodname' => 'ping',
+        'classpath' => 'local/integracao/classes/ping.php',
+        'description' => 'Ping function',
+        'type' => 'read'
     )
 );
 
@@ -50,7 +64,8 @@ $services = array(
     'Integracao' => array(
         'functions' => array('local_integracao_create_course',
                              'local_integracao_update_course',
-                             'local_integracao_create_group'),
+                             'local_integracao_create_group',
+                             'local_integracao_enrol_tutor'),
         'restrictedusers' => 0,
         'enabled' => 1
     )

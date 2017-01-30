@@ -119,27 +119,6 @@ class local_wsintegracao_group extends wsintegracao_base{
         return $group;
       }
 
-
-      protected static function get_group_by_grp_id($grp_id) {
-          global $DB;
-
-          try {
-          $groupid = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
-
-          } catch (\Exception $e) {
-                if(helper::debug()){
-                    throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
-                }
-            }
-
-          if($groupid) {
-              $groupid = $groupid->groupid;
-          } else {
-              $groupid = 0;
-          }
-
-          return $groupid;
-     }
      protected static function get_create_group_validation_rules($group)
      {
          // Busca o id do curso apartir do trm_id da turma.
@@ -159,7 +138,7 @@ class local_wsintegracao_group extends wsintegracao_base{
 
          $groupid = self::get_group_by_grp_id($group->grp_id);
 
-         // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
+         // Dispara uma excessao caso ja exista um grupo com esse grp_id
          if($groupid) {
            throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
          }

@@ -24,9 +24,12 @@
 
 require_once($CFG->libdir . "/externallib.php");
 
-class wsintegracao_base extends external_api {
+class wsintegracao_base extends external_api
+{
+  const TUTOR_ROLEID = 4;
 
-        protected static function get_course_by_trm_id($trm_id) {
+        protected static function get_course_by_trm_id($trm_id)
+        {
             global $DB;
 
             try {
@@ -46,5 +49,65 @@ class wsintegracao_base extends external_api {
 
             return $courseid;
        }
+
+       protected static function get_user_by_pes_id($pes_id)
+       {
+           global $DB;
+
+           try {
+           $userid = $DB->get_record('int_pessoa_user', array('pes_id'=>$pes_id), '*');
+
+           } catch (\Exception $e) {
+                 if(helper::debug()){
+                     throw new moodle_exception('databaseaccesserror', 'local_integracao', null, null, '');
+                 }
+             }
+
+           if($userid) {
+               $userid = $userid->userid;
+           } else {
+               $userid = null;
+           }
+
+           return $userid;
+      }
+
+
+        protected static function get_group_by_grp_id($grp_id)
+        {
+            global $DB;
+
+            try {
+            $groupid = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
+
+            } catch (\Exception $e) {
+                  if(helper::debug()){
+                      throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
+                  }
+              }
+
+            if($groupid) {
+                $groupid = $groupid->groupid;
+            } else {
+                $groupid = 0;
+            }
+
+            return $groupid;
+       }
+
+      protected static function save_user($user)
+      {
+        global $CFG, $DB;
+
+        // Inlcui a biblioteca de aluno do moodle
+        require_once("{$CFG->dirroot}/user/lib.php");
+
+        // Cria o usuario usando a biblioteca do proprio moodle.
+        $user->confirmed = 1;
+        $user->mnethostid = 1;
+        $userid = user_create_user($user);
+
+        return $userid;
+    }
 
 }
