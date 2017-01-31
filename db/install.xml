@@ -46,8 +46,8 @@
         <FIELD NAME="pes_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="userid" NEXT="trm_id" COMMENT="ID da pessoa no harpia. gra_pessoas"/>
         <FIELD NAME="trm_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="pes_id" NEXT="courseid" COMMENT="ID da turma no harpia. gra_turmas"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="trm_id" NEXT="grp_id" COMMENT="ID do curso no moodle. mdl_course"/>
-        <FIELD NAME="grp_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="courseid" NEXT="groupid" COMMENT="ID do grupo no harpia. gra_grupos"/>
-        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="grp_id" COMMENT="ID do grupo no moodle. mdl_groups"/>
+        <FIELD NAME="grp_id" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="courseid" NEXT="groupid" COMMENT="ID do grupo no harpia. gra_grupos"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="grp_id" COMMENT="ID do grupo no moodle. mdl_groups"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for int_student_course"/>

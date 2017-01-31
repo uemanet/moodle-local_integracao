@@ -57,6 +57,13 @@ $functions = array(
         'classpath' => 'local/integracao/classes/ping.php',
         'description' => 'Ping function',
         'type' => 'read'
+    ),
+    'local_integracao_enrol_student' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'enrol_student',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Enrol a student',
+        'type' => 'write'
     )
 );
 
@@ -66,6 +73,7 @@ $services = array(
                              'local_integracao_update_course',
                              'local_integracao_create_group',
                              'local_integracao_enrol_tutor',
+                             'local_integracao_enrol_student',
                              'ping'),
         'restrictedusers' => 0,
         'enabled' => 1
