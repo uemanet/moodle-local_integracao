@@ -63,7 +63,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for int_pessoa_user"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="int_discipline_section" COMMENT="Tabela de mapeamento de disciplinas do harpia com o Moodle" PREVIOUS="int_pessoa_user">
+    <TABLE NAME="int_discipline_section" COMMENT="Tabela de mapeamento de disciplinas do harpia com o Moodle" PREVIOUS="int_pessoa_user" NEXT="int_user_discipline">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false" NEXT="ofd_id"/>
         <FIELD NAME="ofd_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="sectionid" COMMENT="ID da disciplina oferecida no gestor"/>
@@ -72,6 +72,17 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for int_discipline_section"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="int_user_discipline" COMMENT="Disciplinas que o usuario esta matriculado" PREVIOUS="int_discipline_section">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" ENUM="false" NEXT="mof_id"/>
+        <FIELD NAME="mof_id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="id" NEXT="userid" COMMENT="ID da matricula na disciplina ofertada. acd_matriculasofertas"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="mof_id" NEXT="sectionid" COMMENT="ID do usuario no moodle mdl_user"/>
+        <FIELD NAME="sectionid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" ENUM="false" PREVIOUS="userid" COMMENT="ID da section no moodle. mdl_course_sections"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for int_user_discipline"/>
       </KEYS>
     </TABLE>
   </TABLES>
