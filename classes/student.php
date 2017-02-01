@@ -61,8 +61,6 @@ class local_wsintegracao_student extends wsintegracao_base{
           //insere os dados na tabela de controle
           $result = $DB->insert_record('int_student_course', $aluCourse);
 
-
-
           // Prepara o array de retorno.
           $returndata = null;
           if($result) {
@@ -128,6 +126,7 @@ class local_wsintegracao_student extends wsintegracao_base{
             $res = $DB->insert_record('int_pessoa_user', $data);
           }
 
+          //verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia
           $courseid = self::get_course_by_trm_id($student->trm_id);
 
           if(!$courseid) {
