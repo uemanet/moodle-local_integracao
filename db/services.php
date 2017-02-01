@@ -71,6 +71,13 @@ $functions = array(
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Create a discipline',
         'type' => 'write'
+    ),
+    'local_integracao_enrol_student_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'enrol_student_discipline',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Enrol a student in a discipline',
+        'type' => 'write'
     )
 );
 
@@ -81,8 +88,9 @@ $services = array(
                              'local_integracao_create_group',
                              'local_integracao_enrol_tutor',
                              'local_integracao_enrol_student',
-                             'ping',
-                             'local_integracao_create_discipline'),
+                             'local_integracao_enrol_student_discipline',
+                             'local_integracao_create_discipline',
+                             'ping'),
                              'restrictedusers' => 0,
                              'enabled' => 1
     )

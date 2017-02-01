@@ -17,7 +17,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
 
         // Validação dos parametros
         $params = self::validate_parameters(self::create_discipline_parameters(), array('discipline' => $discipline));
-        
+
         // transforma o array em objeto
         $discipline = (object)$discipline;
 
@@ -147,5 +147,80 @@ class local_wsintegracao_discipline extends wsintegracao_base
         $DB->insert_record('int_pessoa_user', $data);
 
         return $userid;
+    }
+
+    public static function enrol_student_discipline($enrol)
+    {
+        global $CFG, $DB;
+
+        // Validação dos parametros
+        $params = self::validate_parameters(self::enrol_student_discipline_parameters(), array('enrol' => $enrol));
+
+        $enrol = (object)$enrol;
+
+        // Busca a seccao apartir do id da oferta da disciplina.
+        $section = self::get_section_by_ofd_id($enrol->ofd_id);
+        // Dispara uma excessao caso nao tenha um mapeamento entre a oferta da disciplina e uma section.
+        if(!$section) {
+            throw new Exception("Nao existe uma section mapeada para essa disciplina oferecida. ofd_id: " . $enrol->ofd_id);
+        }
+
+        // Busca o id do usuario apartir do alu_id do aluno.
+        $userid = self::get_user_by_pes_id($enrol->pes_id);
+        // Dispara uma excessao se esse aluno nao estiver mapeado para um usuario.
+        if(!$userid) {
+            throw new Exception("Nenhum usuario esta mapeado para o aluno com pes_id: " . $enrol->pes_id);
+        }
+
+        // Verifica se o aluno ja esta matriculado para a disciplina
+        $userdiscipline = $DB->get_record('int_user_discipline', array('userid'=>$userid, 'sectionid'=>$section->sectionid), '*');
+        if($userdiscipline) {
+            throw new Exception("O aluno ja esta matriculado para essa disciplina. ofd_id: " . $enrol->ofd_id);
+        }
+
+        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+        $transaction = $DB->start_delegated_transaction();
+
+        $data['mof_id'] = $enrol->mof_id;
+        $data['userid'] = $userid;
+        $data['sectionid'] = $section->sectionid;
+
+        $res = $DB->insert_record('int_user_discipline', $data);
+
+        // Persiste as operacoes em caso de sucesso.
+        $transaction->allow_commit();
+
+        return array(
+            'id' => $res,
+            'status' => 'success',
+            'message' => 'Aluno matriculado na disciplina'
+        );
+
+        //return $returndata;
+    }
+
+    public static function enrol_student_discipline_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                'enrol' => new external_single_structure(
+                  array(
+                      'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia'),
+                      'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina'),
+                      'pes_id' => new external_value(PARAM_TEXT, 'Id do aluno')
+                  )
+                )
+            )
+        );
+    }
+
+    public static function enrol_student_discipline_returns() {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id do aluno matriculado'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
     }
 }
