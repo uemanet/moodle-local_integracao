@@ -57,7 +57,14 @@ $functions = array(
         'classpath' => 'local/integracao/classes/ping.php',
         'description' => 'Ping function',
         'type' => 'read'
-    )
+    ),
+    'local_integracao_create_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'create_discipline',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Create a discipline',
+        'type' => 'write'
+    ),
 );
 
 $services = array(
@@ -66,7 +73,8 @@ $services = array(
                              'local_integracao_update_course',
                              'local_integracao_create_group',
                              'local_integracao_enrol_tutor',
-                             'ping'),
+                             'ping',
+                             'local_integracao_create_discipline'),
         'restrictedusers' => 0,
         'enabled' => 1
     )
