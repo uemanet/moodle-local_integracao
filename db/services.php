@@ -58,13 +58,20 @@ $functions = array(
         'description' => 'Ping function',
         'type' => 'read'
     ),
+    'local_integracao_enrol_student' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'enrol_student',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Enrol a student',
+        'type' => 'write'
+    ),
     'local_integracao_create_discipline' => array(
         'classname' => 'local_wsintegracao_discipline',
         'methodname' => 'create_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Create a discipline',
         'type' => 'write'
-    ),
+    )
 );
 
 $services = array(
@@ -73,9 +80,10 @@ $services = array(
                              'local_integracao_update_course',
                              'local_integracao_create_group',
                              'local_integracao_enrol_tutor',
+                             'local_integracao_enrol_student',
                              'ping',
                              'local_integracao_create_discipline'),
-        'restrictedusers' => 0,
-        'enabled' => 1
+                             'restrictedusers' => 0,
+                             'enabled' => 1
     )
 );

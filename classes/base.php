@@ -26,121 +26,126 @@ require_once($CFG->libdir . "/externallib.php");
 
 class wsintegracao_base extends external_api
 {
-    const TEACHER_ROLEID = 3;
-    const TUTOR_ROLEID = 4;
+
+  const TUTOR_ROLEID = 4;
+  const STUDENT_ROLEID = 5;
 
     protected static function get_course_by_trm_id($trm_id)
     {
-    global $DB;
+      global $DB;
 
-    try {
-    $courseid = $DB->get_record('int_turma_course', array('trm_id'=>$trm_id), '*');
+      try {
+      $courseid = $DB->get_record('int_turma_course', array('trm_id'=>$trm_id), '*');
 
-    } catch (\Exception $e) {
-      if(helper::debug()){
-          throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
+      } catch (\Exception $e) {
+        if(helper::debug()){
+            throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
+        }
       }
-    }
 
-    if($courseid) {
-    $courseid = $courseid->courseid;
-    } else {
-    $courseid = 0;
-    }
+        if($courseid) {
+          $courseid = $courseid->courseid;
+        } else {
+          $courseid = 0;
+        }
 
-    return $courseid;
+      return $courseid;
     }
 
     protected static function get_user_by_pes_id($pes_id)
     {
-    global $DB;
+      global $DB;
 
-    try {
-    $userid = $DB->get_record('int_pessoa_user', array('pes_id'=>$pes_id), '*');
+      try {
+      $userid = $DB->get_record('int_pessoa_user', array('pes_id'=>$pes_id), '*');
 
-    } catch (\Exception $e) {
-     if(helper::debug()){
-         throw new moodle_exception('databaseaccesserror', 'local_integracao', null, null, '');
-     }
-    }
+          } catch (\Exception $e) {
+             if(helper::debug()){
+                 throw new moodle_exception('databaseaccesserror', 'local_integracao', null, null, '');
+             }
+          }
 
-    if($userid) {
-    $userid = $userid->userid;
-    } else {
-    $userid = null;
-    }
+        if($userid) {
+          $userid = $userid->userid;
+        } else {
+          $userid = null;
+        }
 
-    return $userid;
+      return $userid;
     }
 
     protected static function get_group_by_grp_id($grp_id)
     {
-    global $DB;
+      global $DB;
 
-    try {
-    $groupid = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
+        try {
+        $groupid = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
 
-    } catch (\Exception $e) {
-      if(helper::debug()){
-          throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
-      }
-    }
+          } catch (\Exception $e) {
+            if(helper::debug()){
+                throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
+            }
+        }
 
-    if($groupid) {
-    $groupid = $groupid->groupid;
-    } else {
-    $groupid = 0;
-    }
+        if($groupid) {
+          $groupid = $groupid->groupid;
+        } else {
+          $groupid = 0;
+        }
 
-    return $groupid;
+      return $groupid;
     }
 
     protected static function save_user($user)
     {
         global $CFG, $DB;
-    
+
         // Inclui a biblioteca de aluno do moodle
         require_once("{$CFG->dirroot}/user/lib.php");
-    
+
         // Cria o usuario usando a biblioteca do proprio moodle.
         $user->confirmed = 1;
         $user->mnethostid = 1;
         $userid = user_create_user($user);
-    
+
         return $userid;
     }
 
-    protected static function get_course_enrol($courseid) {
-      global $DB;
+    protected static function get_course_enrol($courseid)
+    {
+        global $DB;
 
-      $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
+        $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
 
-      return $enrol;
+        return $enrol;
     }
 
-    protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
-      global $CFG;
+    protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid)
+    {
+        global $CFG;
 
-      $courseenrol = self::get_course_enrol($courseid);
+        $courseenrol = self::get_course_enrol($courseid);
 
-      require_once($CFG->libdir . "/enrollib.php");
+        require_once($CFG->libdir . "/enrollib.php");
 
-      if (!$enrol_manual = enrol_get_plugin('manual')) {
-          throw new coding_exception('Can not instantiate enrol_manual');
-      }
+        if (!$enrol_manual = enrol_get_plugin('manual')) {
+            throw new coding_exception('Can not instantiate enrol_manual');
+        }
 
-      $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
+        $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
     }
 
-    protected static function get_courseid_by_groupid($groupid){
-      global $DB;
+    protected static function get_courseid_by_groupid($groupid)
+    {
+        global $DB;
 
-      $group = $DB->get_record('groups', array('id' => $groupid), '*');
+        $group = $DB->get_record('groups', array('id' => $groupid), '*');
 
-      return $group->courseid;
+        return $group->courseid;
     }
 
-    protected static function get_section_by_ofd_id($ofd_id){
+    protected static function get_section_by_ofd_id($ofd_id)
+    {
         global $DB;
 
         $section = $DB->get_record('int_discipline_section', array('ofd_id'=>$ofd_id), '*');

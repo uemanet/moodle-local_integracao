@@ -1,12 +1,12 @@
 <?php
 // This file is part of wsintegracao plugin for Moodle.
 //
-// wstutor is free software: you can redistribute it and/or modify
+// wsintegracao is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// wstutor is distributed in the hope that it will be useful,
+// wsintegracao is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -83,6 +83,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
               array(
                   'tutor' => new external_single_structure(
                       array(
+                          'ttg_tipo_tutoria' => new external_value(PARAM_TEXT, 'Tipo de tutoria do tutor'),
                           'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
                           'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
                           'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do tutor'),
