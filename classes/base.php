@@ -25,6 +25,7 @@ class wsintegracao_base extends external_api
 {
     const TEACHER_ROLEID = 3;
     const TUTOR_ROLEID = 4;
+    const STUDENT_ROLEID = 5;
     protected static function get_course_by_trm_id($trm_id)
     {
         global $DB;
