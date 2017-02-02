@@ -92,6 +92,10 @@ class local_wsintegracao_discipline extends wsintegracao_base
             $returndata['message'] = 'Erro ao tentar criar disciplina';
         }
 
+        // Recria o cache do curso
+        require_once($CFG->libdir . "/modinfolib.php");
+        rebuild_course_cache($courseid, true);
+
         // Persiste as operacoes em caso de sucesso.
         $transaction->allow_commit();
 
