@@ -37,9 +37,11 @@ class local_wsintegracao_group extends wsintegracao_base{
         //verifica se o grupo pode ser criado e recebe o id do course do group
         $courseid = self::get_create_group_validation_rules($group);
 
+
+
+        try{
         // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
         $transaction = $DB->start_delegated_transaction();
-
         //prepara o array para salvar os dados no moodle
         $groupdata['courseid'] = $courseid;
         $groupdata['name'] = $group->name;
@@ -84,6 +86,9 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         // Persiste as operacoes em caso de sucesso.
         $transaction->allow_commit();
+      }catch(Exception $e) {
+          $transaction->rollback($e);
+        }
 
         return $returndata;
     }
