@@ -33,8 +33,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Transforma o array em objeto.
         $student = (object)$student;
-
-
+        
         try{
           // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
           $transaction = $DB->start_delegated_transaction();
@@ -119,9 +118,35 @@ class local_wsintegracao_student extends wsintegracao_base{
 
     public static function get_enrol_student_course_validation_rules($student){
         global $CFG, $DB;
+
+        //verifica se a matricula passada pelo harpia já está mapeada com o moodle
+        $matricula = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id), '*');
+        if ($matricula) {
+          throw new Exception("A matricula de mat_id: " .$student->mat_id. " já está mapeada no moodle com o course de id:".$courseid);
+        }
+
+        //verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia
+        $courseid = self::get_course_by_trm_id($student->trm_id);
+        if(!$courseid) {
+          throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
+        }
+
+        //verifica se o campo de grupo existe, se existir, pegar o seu id no lado do moodle
+        $result['groupid'] = null;
+        if ($student->grp_id){
+
+          $groupid = self::get_group_by_grp_id($student->grp_id);
+
+          // Dispara uma excessao caso o grupo com grp_id informado não exista
+          if(!$groupid) {
+            throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$student->grp_id);
+          }
+          //coloca o valor de groupid em um array de retorno
+          $result['groupid'] = $groupid;
+        }
+
         //verifica se o o usuário enviado pelo harpia, existe no moodle
         $userid = self::get_user_by_pes_id($student->pes_id);
-
         //se ele não existir, criar o usuário e adicioná-lo na tabela de controle
         if(!$userid){
 
@@ -133,27 +158,6 @@ class local_wsintegracao_student extends wsintegracao_base{
             $res = $DB->insert_record('int_pessoa_user', $data);
         }
 
-        //verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia
-        $courseid = self::get_course_by_trm_id($student->trm_id);
-
-        if(!$courseid) {
-            throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
-        }
-
-        //verifica se o campo de grupo existe, se existir, pegar o seu id no lado do moodle
-        $result['groupid'] = null;
-        if ($student->grp_id){
-
-            $groupid = self::get_group_by_grp_id($student->grp_id);
-
-            // Dispara uma excessao caso o grupo com grp_id informado não exista
-            if(!$groupid) {
-                throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$student->grp_id);
-            }
-            //coloca o valor de groupid em um array de retorno
-            $result['groupid'] = $groupid;
-        }
-
         //verifica se o aluno ja está matriculado no curso
         $aluCourse = $DB->get_record('int_student_course', array('pes_id' => $student->pes_id, 'courseid' => $courseid), '*');
 
@@ -161,19 +165,11 @@ class local_wsintegracao_student extends wsintegracao_base{
             throw new Exception("O aluno de pes_id " .$student->pes_id. " já está vinculado ao curso de courseid ".$courseid);
         }
 
-        //verifica se a matricula passada pelo harpia já está mapeada com o moodle
-        $matricula = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id), '*');
-
-        if ($matricula) {
-            throw new Exception("A matricula de mat_id: " .$student->mat_id. " já está mapeada no moodle com o course de id:".$courseid);
-        }
-
         //prepara o array de retorno
         $result['userid'] = $userid;
         $result['courseid'] = $courseid;
 
         return $result;
-
     }
 
 }

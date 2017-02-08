@@ -173,7 +173,6 @@ class local_wsintegracao_course extends wsintegracao_base{
     {
         //Verifica se a turma já está mapeada para algum curso do ambiente
         $courseid = self::get_course_by_trm_id($course->trm_id);
-
         // Dispara uma excessao se essa turma ja estiver mapeada para um curso.
         if($courseid) {
             throw new Exception("Essa turma ja esta mapeada com o curso de id: " . $courseid);

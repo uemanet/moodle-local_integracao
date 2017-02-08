@@ -82,8 +82,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
             $returndata['status'] = 'error';
             $returndata['message'] = 'Erro ao tentar vincular o tutor';
         }
-
-
+        
         return $returndata;
     }
     public static function enrol_tutor_parameters() {
@@ -122,6 +121,13 @@ class local_wsintegracao_tutor extends wsintegracao_base{
         //verifica se o o usuário enviado pelo harpia, existe no moodle
         $userid = self::get_user_by_pes_id($tutor->pes_id);
 
+        //verifica se o grupo existe
+        $groupid = self::get_group_by_grp_id($tutor->grp_id);
+        // Dispara uma excessao caso o grupo com grp_id informado não exista
+        if(!$groupid) {
+          throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$tutor->grp_id);
+        }
+
         //se ele não existir, criar o usuário e adicioná-lo na tabela de controle
         if(!$userid){
 
@@ -131,14 +137,6 @@ class local_wsintegracao_tutor extends wsintegracao_base{
             $data['userid'] = $userid;
 
             $res = $DB->insert_record('int_pessoa_user', $data);
-        }
-
-        //verifica se o grupo existe
-        $groupid = self::get_group_by_grp_id($tutor->grp_id);
-
-        // Dispara uma excessao caso o grupo com grp_id informado não exista
-        if(!$groupid) {
-            throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$tutor->grp_id);
         }
 
         //verifica se o tutor pode ser vinculado ao grupo

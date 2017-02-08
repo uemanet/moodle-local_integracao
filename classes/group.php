@@ -126,26 +126,23 @@ class local_wsintegracao_group extends wsintegracao_base{
 
     protected static function get_create_group_validation_rules($group)
     {
+        $groupid = self::get_group_by_grp_id($group->grp_id);
+        // Dispara uma excessao caso ja exista um grupo com esse grp_id
+        if($groupid) {
+          throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
+        }
+
         // Busca o id do curso apartir do trm_id da turma.
         $courseid = self::get_course_by_trm_id($group->trm_id);
-
         // Se nao existir curso mapeado para a turma dispara uma excessao.
         if(!$courseid) {
             throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
         }
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
-
         // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
         if($groupbyname) {
             throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
-        }
-
-        $groupid = self::get_group_by_grp_id($group->grp_id);
-
-        // Dispara uma excessao caso ja exista um grupo com esse grp_id
-        if($groupid) {
-            throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
         }
 
         return $courseid;
