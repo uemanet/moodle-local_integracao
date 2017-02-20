@@ -78,6 +78,13 @@ $functions = array(
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
+    ),
+    'local_integracao_update_user' => array(
+        'classname' => 'local_wsintegracao_user',
+        'methodname' => 'update_user',
+        'classpath' => 'local/integracao/classes/user.php',
+        'description' => 'Update a user',
+        'type' => 'write'
     )
 );
 
@@ -90,6 +97,7 @@ $services = array(
                              'local_integracao_enrol_student',
                              'local_integracao_enrol_student_discipline',
                              'local_integracao_create_discipline',
+                             'local_integracao_update_user',
                              'ping'),
                              'restrictedusers' => 0,
                              'enabled' => 1
