@@ -31,7 +31,6 @@ class local_wsintegracao_user extends wsintegracao_base{
         // Validação dos paramêtros
         $params = self::validate_parameters(self::update_user_parameters(), array('user' => $user));
 
-
         //verifica se o o usuário enviado pelo harpia, existe no moodle
         $user['id'] = self::get_user_by_pes_id($user['pes_id']);
 
@@ -43,20 +42,24 @@ class local_wsintegracao_user extends wsintegracao_base{
         // Transforma o array em objeto.
         $user = (object)$user;
 
+        try{
 
-        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-        $transaction = $DB->start_delegated_transaction();
+          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+          $transaction = $DB->start_delegated_transaction();
 
-        // Inclui a biblioteca de usuários do moodle
-        require_once("{$CFG->dirroot}/user/lib.php");
-        user_update_user($user, false);
+          // Inclui a biblioteca de usuários do moodle
+          require_once("{$CFG->dirroot}/user/lib.php");
+          user_update_user($user, false);
 
-        // Persiste as operacoes em caso de sucesso.
-        $transaction->allow_commit();
+          // Persiste as operacoes em caso de sucesso.
+          $transaction->allow_commit();
 
+        }catch(Exception $e) {
+          $transaction->rollback($e);
+        }
 
         // Prepara o array de retorno.
-        $returndata['id'] = $result->id;
+        $returndata['id'] = $user->id;
         $returndata['status'] = 'success';
         $returndata['message'] = 'Usuário atualizado com sucesso';
 
