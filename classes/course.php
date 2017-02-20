@@ -152,7 +152,6 @@ class local_wsintegracao_course extends wsintegracao_base{
                 'course' => new external_single_structure(
                     array(
                         'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
-                        'category' => new external_value(PARAM_INT, 'Categoria do curso'),
                         'shortname' => new external_value(PARAM_TEXT, 'Nome curto do curso'),
                         'fullname' => new external_value(PARAM_TEXT, 'Nome completo do curso')
                     )
