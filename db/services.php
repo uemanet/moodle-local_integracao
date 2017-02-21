@@ -88,7 +88,7 @@ $functions = array(
     ),
     'local_integracao_delete_course' => array(
         'classname' => 'local_wsintegracao_course',
-        'methodname' => 'delete_course',
+        'methodname' => 'remove_course',
         'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Delete a course',
         'type' => 'write'

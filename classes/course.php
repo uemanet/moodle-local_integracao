@@ -168,11 +168,11 @@ class local_wsintegracao_course extends wsintegracao_base{
             )
         );
     }
-    public static function delete_course($course) {
+    public static function remove_course($course) {
         global $CFG, $DB;
 
         // Valida os parametros.
-        $params = self::validate_parameters(self::delete_course_parameters(), array('course' => $course));
+        $params = self::validate_parameters(self::remove_course_parameters(), array('course' => $course));
 
         // Inlcui a biblioteca de cursos do moodle
         require_once("{$CFG->dirroot}/lib/moodlelib.php");
@@ -180,23 +180,33 @@ class local_wsintegracao_course extends wsintegracao_base{
         // Transforma o array em objeto.
         $course = (object)$course;
 
+        // Busca o id do curso apartir do trm_id da turma.
+        $courseid = self::get_course_by_trm_id($course->trm_id);
+
+        // Se nao existir curso mapeado para a turma dispara uma excessao.
+        if($courseid) {
+          $course->id = $courseid;
+        } else {
+          throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
+        }
+
         try{
 
           // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
           $transaction = $DB->start_delegated_transaction();
 
-          // Busca o id do curso apartir do trm_id da turma.
-          $courseid = self::get_course_by_trm_id($course->trm_id);
-
-          // Se nao existir curso mapeado para a turma dispara uma excessao.
-          if($courseid) {
-            $course->id = $courseid;
-          } else {
-            throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
-          }
-
           // Deleta o curso usando a biblioteca do proprio moodle.
-          delete_course($courseid);
+          delete_course($courseid,false);
+
+          //deleta os registros da tabela de controle
+          $DB->delete_records('int_turma_course', array('courseid'=>$courseid));
+
+          // Prepara o array de retorno.
+          $returndata['id'] = 1;
+          $returndata['status'] = 'success';
+          $returndata['message'] = "Curso excluído com sucesso";
+
+          return $returndata;
 
           // Persiste as operacoes em caso de sucesso.
           $transaction->allow_commit();
@@ -206,14 +216,9 @@ class local_wsintegracao_course extends wsintegracao_base{
           }
 
 
-        // Prepara o array de retorno.
-        $returndata['id'] = $courseid;
-        $returndata['status'] = 'success';
-        $returndata['message'] = "Curso excluído com sucesso";
 
-        return $returndata;
     }
-    public static function delete_course_parameters() {
+    public static function remove_course_parameters() {
         return new external_function_parameters(
             array(
                 'course' => new external_single_structure(
@@ -224,7 +229,7 @@ class local_wsintegracao_course extends wsintegracao_base{
             )
         );
     }
-    public static function delete_course_returns() {
+    public static function remove_course_returns() {
         return new external_single_structure(
             array(
                 'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
