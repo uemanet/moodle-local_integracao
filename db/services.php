@@ -44,6 +44,13 @@ $functions = array(
         'description' => 'Create a group',
         'type' => 'write'
     ),
+    'local_integracao_update_group' => array(
+        'classname' => 'local_wsintegracao_group',
+        'methodname' => 'update_group',
+        'classpath' => 'local/integracao/classes/group.php',
+        'description' => 'Update a group',
+        'type' => 'write'
+    ),
     'local_integracao_enrol_tutor' => array(
         'classname' => 'local_wsintegracao_tutor',
         'methodname' => 'enrol_tutor',
@@ -100,6 +107,7 @@ $services = array(
         'functions' => array('local_integracao_create_course',
                              'local_integracao_update_course',
                              'local_integracao_create_group',
+                             'local_integracao_update_group',
                              'local_integracao_enrol_tutor',
                              'local_integracao_enrol_student',
                              'local_integracao_enrol_student_discipline',
