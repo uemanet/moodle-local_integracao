@@ -173,13 +173,79 @@ class local_wsintegracao_group extends wsintegracao_base{
             )
         );
     }
+    public static function remove_group($group) {
+        global $CFG, $DB;
+
+        // Valida os parametros.
+        $params = self::validate_parameters(self::remove_group_parameters(), array('group' => $group));
+
+        // Inlcui a biblioteca de grupos do moodle
+        require_once("{$CFG->dirroot}/group/lib.php");
+
+        // Transforma o array em objeto.
+        $group = (object)$group;
+
+        // Busca o id do curso apartir do trm_id da turma.
+        $groupid = self::get_group_by_grp_id($group->grp_id);
+
+        // Se nao existir curso mapeado para a turma dispara uma excessao.
+        if(!$groupid) {
+          throw new Exception("Nenhum group mapeado com o grupo com grp_id: " . $group->grp_id);
+        }
+
+        try{
+
+          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+          $transaction = $DB->start_delegated_transaction();
+
+          // Deleta o curso usando a biblioteca do proprio moodle.
+          groups_delete_group($groupid);
+
+          //deleta os registros da tabela de controle
+          $DB->delete_records('int_grupo_group', array('groupid'=>$groupid));
+
+
+          // Persiste as operacoes em caso de sucesso.
+          $transaction->allow_commit();
+
+        }catch(Exception $e) {
+            $transaction->rollback($e);
+          }
+        // Prepara o array de retorno.
+        $returndata['id'] = $groupid;
+        $returndata['status'] = 'success';
+        $returndata['message'] = "Grupo excluído com sucesso";
+
+        return $returndata;
+
+    }
+    public static function remove_group_parameters() {
+        return new external_function_parameters(
+            array(
+                'group' => new external_single_structure(
+                    array(
+                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+                    )
+                )
+            )
+        );
+    }
+    public static function remove_group_returns() {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id do grupo removido'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
 
     private static function get_group_by_name($courseid, $name) {
-        global $DB;
+      global $DB;
 
-        $group = $DB->get_record('groups', array('courseid'=>$courseid, 'name' => $name), '*');
+      $group = $DB->get_record('groups', array('courseid'=>$courseid, 'name' => $name), '*');
 
-        return $group;
+      return $group;
     }
 
     protected static function get_create_group_validation_rules($group)

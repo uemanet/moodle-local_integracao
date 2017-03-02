@@ -51,6 +51,13 @@ $functions = array(
         'description' => 'Update a group',
         'type' => 'write'
     ),
+    'local_integracao_delete_group' => array(
+        'classname' => 'local_wsintegracao_group',
+        'methodname' => 'remove_group',
+        'classpath' => 'local/integracao/classes/group.php',
+        'description' => 'Delete a group',
+        'type' => 'write'
+    ),
     'local_integracao_enrol_tutor' => array(
         'classname' => 'local_wsintegracao_tutor',
         'methodname' => 'enrol_tutor',
@@ -114,6 +121,7 @@ $services = array(
                              'local_integracao_create_discipline',
                              'local_integracao_update_user',
                              'local_integracao_delete_course',
+                             'local_integracao_delete_group',
                              'ping'),
                              'restrictedusers' => 0,
                              'enabled' => 1
