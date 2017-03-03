@@ -106,6 +106,13 @@ $functions = array(
         'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Delete a course',
         'type' => 'write'
+    ),
+    'local_integracao_delete_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'endpoint_teste',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Delete a discipline',
+        'type' => 'write'
     )
 );
 
@@ -122,6 +129,7 @@ $services = array(
                              'local_integracao_update_user',
                              'local_integracao_delete_course',
                              'local_integracao_delete_group',
+                             'local_integracao_delete_discipline',
                              'ping'),
                              'restrictedusers' => 0,
                              'enabled' => 1
