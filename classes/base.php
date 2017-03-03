@@ -21,11 +21,13 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once($CFG->libdir . "/externallib.php");
+
 class wsintegracao_base extends external_api
 {
     const TEACHER_ROLEID = 3;
     const TUTOR_ROLEID = 4;
     const STUDENT_ROLEID = 5;
+
     protected static function get_course_by_trm_id($trm_id)
     {
         global $DB;
@@ -43,6 +45,7 @@ class wsintegracao_base extends external_api
         }
         return $courseid;
     }
+
     protected static function get_user_by_pes_id($pes_id)
     {
         global $DB;
@@ -60,6 +63,7 @@ class wsintegracao_base extends external_api
         }
         return $userid;
     }
+
     protected static function get_group_by_grp_id($grp_id)
     {
         global $DB;
@@ -77,6 +81,7 @@ class wsintegracao_base extends external_api
         }
         return $groupid;
     }
+
     protected static function save_user($user)
     {
         global $CFG, $DB;
@@ -96,6 +101,7 @@ class wsintegracao_base extends external_api
         $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);
         return $enrol;
     }
+
     protected static function enrol_user_in_moodle_course($userid, $courseid, $roleid) {
         global $CFG;
         $courseenrol = self::get_course_enrol($courseid);
@@ -105,16 +111,19 @@ class wsintegracao_base extends external_api
         }
         $enrol_manual->enrol_user($courseenrol, $userid, $roleid, time());
     }
+
     protected static function get_courseid_by_groupid($groupid){
         global $DB;
         $group = $DB->get_record('groups', array('id' => $groupid), '*');
         return $group->courseid;
     }
+
     protected static function get_section_by_ofd_id($ofd_id){
         global $DB;
         $section = $DB->get_record('int_discipline_section', array('ofd_id'=>$ofd_id), '*');
         return $section;
     }
+
     protected static function get_last_section_course($courseId)
     {
         global $DB;

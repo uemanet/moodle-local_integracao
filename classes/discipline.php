@@ -71,7 +71,8 @@ class local_wsintegracao_discipline extends wsintegracao_base
             }
 
             // Atribui o professor ao curso
-            self::enrol_user_in_moodle_course($userId, $courseId, self::TEACHER_ROLEID);
+            $professor_role = get_config('integracao')->professor;
+            self::enrol_user_in_moodle_course($userId, $courseId, $professor_role);
         }
 
         // Adiciona as informações na tabela de controle entre as ofertas de disciplina e as sections
@@ -94,7 +95,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
 
         // Recria o cache do curso
         require_once($CFG->libdir . "/modinfolib.php");
-        rebuild_course_cache($courseid, true);
+        rebuild_course_cache($courseId, true);
 
         // Persiste as operacoes em caso de sucesso.
         $transaction->allow_commit();
