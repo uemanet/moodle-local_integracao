@@ -71,7 +71,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
             }
 
             // Atribui o professor ao curso
-            $professor_role = get_config('integracao')->professor;
+            $professor_role = get_config('local_integracao')->professor;
             self::enrol_user_in_moodle_course($userId, $courseId, $professor_role);
         }
 

@@ -43,7 +43,8 @@ class local_wsintegracao_tutor extends wsintegracao_base{
         $transaction = $DB->start_delegated_transaction();
 
         //vincula o tutor a um curso no moodle
-        self::enrol_user_in_moodle_course($data['userid'], $courseid, self::TUTOR_ROLEID);
+        $tutor_role = get_config('local_integracao')->tutor_distancia;
+        self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutor_role);
 
         //adiciona a bibliteca de grupos do moodle
         require_once("{$CFG->dirroot}/group/lib.php");

@@ -24,62 +24,67 @@ require_once($CFG->libdir . "/externallib.php");
 
 class wsintegracao_base extends external_api
 {
-    const TEACHER_ROLEID = 3;
-    const TUTOR_ROLEID = 4;
-    const STUDENT_ROLEID = 5;
-
     protected static function get_course_by_trm_id($trm_id)
     {
         global $DB;
         try {
-            $courseid = $DB->get_record('int_turma_course', array('trm_id'=>$trm_id), '*');
+            $courseid = 0;
+
+            $result = $DB->get_record('int_turma_course', array('trm_id'=>$trm_id), '*');
+
+            if($result) {
+                $courseid = $result->courseid;
+            }
+
+            return $courseid;
+
         } catch (\Exception $e) {
             if(helper::debug()){
                 throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
             }
         }
-        if($courseid) {
-            $courseid = $courseid->courseid;
-        } else {
-            $courseid = 0;
-        }
-        return $courseid;
     }
 
     protected static function get_user_by_pes_id($pes_id)
     {
         global $DB;
         try {
-            $userid = $DB->get_record('int_pessoa_user', array('pes_id'=>$pes_id), '*');
+            $userid = null;
+
+            $result = $DB->get_record('int_pessoa_user', array('pes_id'=>$pes_id), '*');
+
+            if($result) {
+                $userid = $result->userid;
+            }
+
+            return $userid;
+
         } catch (\Exception $e) {
             if(helper::debug()){
                 throw new moodle_exception('databaseaccesserror', 'local_integracao', null, null, '');
             }
         }
-        if($userid) {
-            $userid = $userid->userid;
-        } else {
-            $userid = null;
-        }
-        return $userid;
     }
 
     protected static function get_group_by_grp_id($grp_id)
     {
         global $DB;
         try {
-            $groupid = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
+            $groupid = 0;
+
+            $result = $DB->get_record('int_grupo_group', array('grp_id'=>$grp_id), '*');
+
+            if($result) {
+                $groupid = $result->groupid;
+            }
+
+            return $groupid;
+
         } catch (\Exception $e) {
             if(helper::debug()){
                 throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
             }
         }
-        if($groupid) {
-            $groupid = $groupid->groupid;
-        } else {
-            $groupid = 0;
-        }
-        return $groupid;
     }
 
     protected static function save_user($user)
@@ -96,6 +101,7 @@ class wsintegracao_base extends external_api
 
         return $userid;
     }
+
     protected static function get_course_enrol($courseid) {
         global $DB;
         $enrol = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', MUST_EXIST);

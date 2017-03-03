@@ -41,7 +41,8 @@ class local_wsintegracao_student extends wsintegracao_base{
         $transaction = $DB->start_delegated_transaction();
 
         //matricula o aluno em um curso no moodle
-        $enrolCourse = self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], self::STUDENT_ROLEID);
+        $student_role = get_config('local_integracao')->aluno;
+        self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], $student_role);
 
         if($data['groupid']){
             //adiciona a bibliteca de grupos do moodle
