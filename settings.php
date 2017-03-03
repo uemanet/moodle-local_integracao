@@ -55,37 +55,37 @@ if ( $hassiteconfig ){
     }
 
     $settings->add(
-        new admin_setting_configselect('integracao/aluno', 'Aluno',
+        new admin_setting_configselect('local_integracao/aluno', 'Aluno',
         '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/aluno_concluido', 'Aluno Concluído',
+        new admin_setting_configselect('local_integracao/aluno_concluido', 'Aluno Concluído',
             '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/aluno_reprovado', 'Aluno Reprovado',
+        new admin_setting_configselect('local_integracao/aluno_reprovado', 'Aluno Reprovado',
             '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/aluno_trancado', 'Aluno Trancado',
+        new admin_setting_configselect('local_integracao/aluno_trancado', 'Aluno Trancado',
             '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/professor', 'Professor',
+        new admin_setting_configselect('local_integracao/professor', 'Professor',
             '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/tutor_presencial', 'Tutor Presencial',
+        new admin_setting_configselect('local_integracao/tutor_presencial', 'Tutor Presencial',
             '', '1', $papeis)
     );
 
     $settings->add(
-        new admin_setting_configselect('integracao/tutor_distancia', 'Tutor à Distância',
+        new admin_setting_configselect('local_integracao/tutor_distancia', 'Tutor à Distância',
             '', '1', $papeis)
     );
 }
