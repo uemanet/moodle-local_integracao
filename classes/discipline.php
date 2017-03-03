@@ -279,7 +279,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
                 $userid = self::get_user_by_pes_id($section->pes_id);
                 $course = $DB->get_record('course', array( 'id' => $courseId ));
 
-                unenrol_user(stdClass $instance, $userid);
+                unenrol_user($course, $userid);
               }
 
             }
