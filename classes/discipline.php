@@ -246,16 +246,9 @@ class local_wsintegracao_discipline extends wsintegracao_base
             throw new Exception('Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: '.$discipline->trm_id);
         }
 
-        // // Pega o numero da ultima section do curso
-        // $lastSection = self::get_last_section_course($courseId);
-        //
-        // // Ultima section do curso
-        // $lastSection = $lastSection->section;
-
         try {
             // Inicia a transação, qualquer erro que aconteça o rollback será executado
             $transaction = $DB->start_delegated_transaction();
-
 
             // Busca as configuracoes do formato do curso
             $courseFormatOptions = $DB->get_record('course_format_options', array('courseid'=>$courseId, 'name' => 'numsections'), '*');
@@ -264,8 +257,8 @@ class local_wsintegracao_discipline extends wsintegracao_base
             $DB->update_record('course_format_options', $courseFormatOptions);
 
             // Deleta a section do moodle
-            $section = $DB->get_record('course_sections', array( 'id' => $sectionId ));
-            $sectionDelete = $DB->delete_records('course_sections', array( 'id' => $sectionId ));
+            $section = $DB->get_record('course_sections', array( 'id' => $sectionId->sectionid ));
+            $sectionDelete = $DB->delete_records('course_sections', array( 'id' => $sectionId->sectionid ));
             $sectionMapeamento = $DB->delete_records('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
 
             //verifica se o usuário que estava vinculado a disciplina está vinculado a alguma outra section no moodle
@@ -291,15 +284,15 @@ class local_wsintegracao_discipline extends wsintegracao_base
                   $transaction->rollback($e);
         }
 
-        $returndata['id'] = $section['id'];
-        $returndata['status'] = 'success';
-        $returndata['message'] = 'Disciplina criada com sucesso';
-
         // Recria o cache do curso
         require_once($CFG->libdir . "/modinfolib.php");
         rebuild_course_cache($courseId, true);
-
+        $returndata['id'] = 0;
+        $returndata['status'] = 'success';
+        $returndata['message'] = 'Disciplina criada com sucesso';
         return $returndata;
+
+
     }
 
     public static function remove_discipline_parameters()
@@ -309,8 +302,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
                 'discipline' => new external_single_structure(
                     array(
                         'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
-                        'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor'),
-                        'pes_id' => new external_value(PARAM_INT,'Id de pessoa vinculado ao professor no gestor')
+                        'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor')
                     )
                 )
             )
