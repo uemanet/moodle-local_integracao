@@ -250,37 +250,44 @@ class local_wsintegracao_discipline extends wsintegracao_base
             // Inicia a transação, qualquer erro que aconteça o rollback será executado
             $transaction = $DB->start_delegated_transaction();
 
-            // Busca as configuracoes do formato do curso
-            $courseFormatOptions = $DB->get_record('course_format_options', array('courseid'=>$courseId, 'name' => 'numsections'), '*');
-            // Atualiza o total de sections do curso (diminui o número de sections)
-            $courseFormatOptions->value = $courseFormatOptions->value - 1;
-            $DB->update_record('course_format_options', $courseFormatOptions);
-
+            //adiciona a biblioteca de cursos do moodle
+            require_once("{$CFG->dirroot}/course/lib.php");
             // Deleta a section do moodle
             $section = $DB->get_record('course_sections', array( 'id' => $sectionId->sectionid ));
-            $sectionDelete = $DB->delete_records('course_sections', array( 'id' => $sectionId->sectionid ));
-            $sectionMapeamento = $DB->delete_records('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
 
-            //verifica se o usuário que estava vinculado a disciplina está vinculado a alguma outra section no moodle
-            $professorMapeamento = $DB->get_records('int_discipline_section', array( 'pes_id' => $section->pes_id ));
+            //busca o curso da disciplina no moodle
+            $course = $DB->get_record('course', array( 'id' => $courseId ));
 
-            if($professorMapeamento){
-              $vinculado = self::verify_if_teacher_enroled_on_another_section_course($professorMapeamento, $courseId);
+            //pega a tabela auxiliar antes de deletar o registro
+            $sectionMapeamento = $DB->get_record('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
 
-              if(!$vinculado){
-                require_once($CFG->libdir . "/enrollib.php");
-                $userid = self::get_user_by_pes_id($section->pes_id);
-                $course = $DB->get_record('course', array( 'id' => $courseId ));
+            //deleta o registro da tabela de mapeamento
+            $sectionMapeamentoDelete = $DB->delete_records('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
 
-                unenrol_user($course, $userid);
-              }
+            //deleta a section do curso do moodle
+            $deletada = course_delete_section($course, $section);
 
+            //verifica se o usuário que estava vinculado a disciplina está vinculado a alguma outra section no moodle depois de deletar o registro
+            $professorMapeamento = $DB->get_records('int_discipline_section', array( 'pes_id' => $sectionMapeamento->pes_id ));
+
+            //busca o usuário no moodle que tenha o pes_id enviado
+            $userid = self::get_user_by_pes_id($sectionMapeamento->pes_id);
+
+            if (!$professorMapeamento){
+              self::unenrol_user_in_moodle_course($userid, $courseId);
             }
 
+            if($professorMapeamento){
+
+              $vinculado = self::verify_if_teacher_enroled_on_another_section_course($professorMapeamento, $courseId);
+              if(!$vinculado){
+                self::unenrol_user_in_moodle_course($userid, $courseId);
+              }
+            }
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
 
-              } catch(Exception $e) {
+            } catch(Exception $e) {
                   $transaction->rollback($e);
         }
 
@@ -289,9 +296,8 @@ class local_wsintegracao_discipline extends wsintegracao_base
         rebuild_course_cache($courseId, true);
         $returndata['id'] = 0;
         $returndata['status'] = 'success';
-        $returndata['message'] = 'Disciplina criada com sucesso';
+        $returndata['message'] = 'Disciplina deletada com sucesso';
         return $returndata;
-
 
     }
 
@@ -310,41 +316,6 @@ class local_wsintegracao_discipline extends wsintegracao_base
     }
 
     public static function remove_discipline_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id da disciplina criada'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
-    }
-
-    public static function endpoint_teste($discipline)
-    {
-        global $CFG, $DB;
-
-        $returndata['id'] = 0;
-        $returndata['status'] = 'success';
-        $returndata['message'] = 'Disciplina deletada com sucesso';
-
-        return $returndata;
-    }
-
-    public static function endpoint_teste_parameters()
-    {
-        return new external_function_parameters(
-            array(
-                'discipline' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
-                        'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor')
-                    )
-                )
-            )
-        );
-    }
-
-    public static function endpoint_teste_returns() {
         return new external_single_structure(
             array(
                 'id' => new external_value(PARAM_INT, 'Id da disciplina criada'),
