@@ -137,4 +137,23 @@ class wsintegracao_base extends external_api
         $params['courseid'] = $courseId;
         return current($DB->get_records_sql($sql, $params));
     }
+
+    protected static function verify_user_enrol_in_course($courseid, $userid)
+    {
+        global $DB;
+
+        $sql = "SELECT * 
+                FROM {enrol} e
+                JOIN {user_enrolments} ue ON e.id = ue.enrolid
+                WHERE e.courseid = :courseid
+                AND  ue.userid = :userid";
+
+        $params = [];
+        $params['courseid'] = $courseid;
+        $params['userid'] = $userid;
+
+        $result = $DB->get_records_sql($sql, $params);
+
+        return $result;
+    }
 }

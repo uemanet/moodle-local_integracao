@@ -112,12 +112,12 @@ class local_wsintegracao_student extends wsintegracao_base{
         );
     }
 
-    public static function update_enrol_student_course($student)
+    public static function change_role_student_course($student)
     {
         global $CFG, $DB;
 
         // validação dos parâmetros
-        self::validate_parameters(self::update_enrol_student_course_parameters(), array('student', $student));
+        self::validate_parameters(self::change_role_student_course_parameters(), array('student', $student));
 
         // Transforma o array em objeto
         $student = (object)$student;
@@ -136,9 +136,11 @@ class local_wsintegracao_student extends wsintegracao_base{
             throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
         }
 
+        $instance = self::get_course_enrol($courseid);
+
     }
 
-    public static function update_enrol_student_course_parameters()
+    public static function change_role_student_course_parameters()
     {
         return new external_function_parameters(
             array(
@@ -154,7 +156,7 @@ class local_wsintegracao_student extends wsintegracao_base{
         );
     }
 
-    public static function update_enrol_student_course_returns()
+    public static function change_role_student_course_returns()
     {
         return new external_single_structure(
             array(
