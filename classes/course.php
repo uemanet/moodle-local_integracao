@@ -23,7 +23,7 @@
 
 require_once("base.php");
 
-class local_wsintegracao_course extends wsintegracao_base{
+class local_wsintegracao_course extends wsintegracao_base {
 
     public static function create_course($course) {
         global $CFG, $DB;

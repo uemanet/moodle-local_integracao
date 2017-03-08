@@ -33,57 +33,61 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Transforma o array em objeto.
         $student = (object)$student;
-        
+
+        $returndata = null;
+
+        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+        $transaction = $DB->start_delegated_transaction();
+
         try{
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            //verifica se o aluno pode ser matriculado no curso
+            $data = self::get_enrol_student_course_validation_rules($student);
 
-          //verifica se o aluno pode ser matriculado no curso
-          $data = self::get_enrol_student_course_validation_rules($student);
+            //matricula o aluno em um curso no moodle
+            $student_role = get_config('local_integracao')->aluno;
+            self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], $student_role);
 
-          //matricula o aluno em um curso no moodle
-          $enrolCourse = self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], self::STUDENT_ROLEID);
+            if ($data['groupid']) {
+                //adiciona a bibliteca de grupos do moodle
+                require_once("{$CFG->dirroot}/group/lib.php");
 
-          if($data['groupid']){
-            //adiciona a bibliteca de grupos do moodle
-            require_once("{$CFG->dirroot}/group/lib.php");
-            //vincula um usuário a um grupo
-            $res = groups_add_member($data['groupid'],$data['userid']);
-          }
+                //vincula um usuário a um grupo
+                $res = groups_add_member($data['groupid'],$data['userid']);
+            }
 
-          //prepara os dados que serão inseridos na tabela de controle
-          $aluCourse['mat_id'] = $student->mat_id;
-          $aluCourse['userid'] = $data['userid'];
-          $aluCourse['pes_id'] = $student->pes_id;
-          $aluCourse['trm_id'] = $student->trm_id;
-          $aluCourse['courseid'] = $data['courseid'];
-          $aluCourse['grp_id'] = $student->grp_id;
-          $aluCourse['groupid'] = $data['groupid'];
-          //insere os dados na tabela de controle
-          $result = $DB->insert_record('int_student_course', $aluCourse);
+            //prepara os dados que serão inseridos na tabela de controle
+            $aluCourse['mat_id'] = $student->mat_id;
+            $aluCourse['userid'] = $data['userid'];
+            $aluCourse['pes_id'] = $student->pes_id;
+            $aluCourse['trm_id'] = $student->trm_id;
+            $aluCourse['courseid'] = $data['courseid'];
+            $aluCourse['grp_id'] = $student->grp_id;
+            $aluCourse['groupid'] = $data['groupid'];
 
-          // Prepara o array de retorno.
-          $returndata = null;
-          if($result) {
-            $returndata['id'] = $result->id;
-            $returndata['status'] = 'success';
-            $returndata['message'] = 'Aluno matriculado com sucesso';
-          } else {
-            $returndata['id'] = 0;
-            $returndata['status'] = 'error';
-            $returndata['message'] = 'Erro ao tentar matricular o aluno';
-          }
+            //insere os dados na tabela de controle
+            $result = $DB->insert_record('int_student_course', $aluCourse);
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
+            // Prepara o array de retorno.
 
+            if ($result) {
+                $returndata['id'] = $result->id;
+                $returndata['status'] = 'success';
+                $returndata['message'] = 'Aluno matriculado com sucesso';
+            } else {
+                $returndata['id'] = 0;
+                $returndata['status'] = 'error';
+                $returndata['message'] = 'Erro ao tentar matricular o aluno';
+            }
 
-        }catch(Exception $e) {
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+        } catch (Exception $e) {
             $transaction->rollback($e);
-          }
+        }
 
         return $returndata;
     }
+
     public static function enrol_student_parameters() {
         return new external_function_parameters(
             array(
@@ -171,5 +175,4 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         return $result;
     }
-
 }
