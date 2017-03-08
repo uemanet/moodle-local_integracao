@@ -29,7 +29,7 @@ class local_wsintegracao_student extends wsintegracao_base{
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
+        self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
 
         // Transforma o array em objeto.
         $student = (object)$student;
@@ -41,13 +41,13 @@ class local_wsintegracao_student extends wsintegracao_base{
         $transaction = $DB->start_delegated_transaction();
 
         //matricula o aluno em um curso no moodle
-        $enrolCourse = self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], self::STUDENT_ROLEID);
+        self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], self::STUDENT_ROLEID);
 
         if($data['groupid']){
             //adiciona a bibliteca de grupos do moodle
             require_once("{$CFG->dirroot}/group/lib.php");
             //vincula um usuário a um grupo
-            $res = groups_add_member($data['groupid'],$data['userid']);
+            groups_add_member($data['groupid'],$data['userid']);
         }
 
         //prepara os dados que serão inseridos na tabela de controle
@@ -78,6 +78,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         return $returndata;
     }
+
     public static function enrol_student_parameters() {
         return new external_function_parameters(
             array(
@@ -110,6 +111,59 @@ class local_wsintegracao_student extends wsintegracao_base{
         );
     }
 
+    public static function update_enrol_student_course($student)
+    {
+        global $CFG, $DB;
+
+        // validação dos parâmetros
+        self::validate_parameters(self::update_enrol_student_course_parameters(), array('student', $student));
+
+        // Transforma o array em objeto
+        $student = (object)$student;
+
+        // verifica se o aluno existe no moodle
+        $userid = self::get_user_by_pes_id($student->pes_id);
+
+        if (!$userid) {
+            throw new Exception("Não existe um aluno cadastrado no moodle com pes_id:" .$student->pes_id);
+        }
+
+        // verifica se existe um curso mapeado no moodle com a turma do aluno
+        $courseid = self::get_course_by_trm_id($student->trm_id);
+
+        if(!$courseid) {
+            throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
+        }
+
+    }
+
+    public static function update_enrol_student_course_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no gestor'),
+                        'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no gestor'),
+                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                        'new_status' => new external_value(PARAM_TEXT, 'Novo status da matricula do aluno no gestor')
+                    )
+                )
+            )
+        );
+    }
+
+    public static function update_enrol_student_course_returns()
+    {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
     public static function get_enrol_student_course_validation_rules($student){
         global $CFG, $DB;
         //verifica se o o usuário enviado pelo harpia, existe no moodle
@@ -123,7 +177,7 @@ class local_wsintegracao_student extends wsintegracao_base{
             $data['pes_id'] = $student->pes_id;
             $data['userid'] = $userid;
 
-            $res = $DB->insert_record('int_pessoa_user', $data);
+            $DB->insert_record('int_pessoa_user', $data);
         }
 
         //verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia
