@@ -44,6 +44,20 @@ $functions = array(
         'description' => 'Create a group',
         'type' => 'write'
     ),
+    'local_integracao_update_group' => array(
+        'classname' => 'local_wsintegracao_group',
+        'methodname' => 'update_group',
+        'classpath' => 'local/integracao/classes/group.php',
+        'description' => 'Update a group',
+        'type' => 'write'
+    ),
+    'local_integracao_delete_group' => array(
+        'classname' => 'local_wsintegracao_group',
+        'methodname' => 'remove_group',
+        'classpath' => 'local/integracao/classes/group.php',
+        'description' => 'Delete a group',
+        'type' => 'write'
+    ),
     'local_integracao_enrol_tutor' => array(
         'classname' => 'local_wsintegracao_tutor',
         'methodname' => 'enrol_tutor',
@@ -78,6 +92,27 @@ $functions = array(
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
+    ),
+    'local_integracao_update_user' => array(
+        'classname' => 'local_wsintegracao_user',
+        'methodname' => 'update_user',
+        'classpath' => 'local/integracao/classes/user.php',
+        'description' => 'Update a user',
+        'type' => 'write'
+    ),
+    'local_integracao_delete_course' => array(
+        'classname' => 'local_wsintegracao_course',
+        'methodname' => 'remove_course',
+        'classpath' => 'local/integracao/classes/course.php',
+        'description' => 'Delete a course',
+        'type' => 'write'
+    ),
+    'local_integracao_delete_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'remove_discipline',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Delete a discipline',
+        'type' => 'write'
     )
 );
 
@@ -86,10 +121,15 @@ $services = array(
         'functions' => array('local_integracao_create_course',
                              'local_integracao_update_course',
                              'local_integracao_create_group',
+                             'local_integracao_update_group',
                              'local_integracao_enrol_tutor',
                              'local_integracao_enrol_student',
                              'local_integracao_enrol_student_discipline',
                              'local_integracao_create_discipline',
+                             'local_integracao_update_user',
+                             'local_integracao_delete_course',
+                             'local_integracao_delete_group',
+                             'local_integracao_delete_discipline',
                              'ping'),
                              'restrictedusers' => 0,
                              'enabled' => 1
