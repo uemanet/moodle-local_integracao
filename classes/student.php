@@ -175,4 +175,105 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         return $result;
     }
+
+    public static function change_student_group($student) {
+        global $CFG, $DB;
+
+        // Validação dos paramêtros
+        $params = self::validate_parameters(self::change_student_group_parameters(), array('student' => $student));
+
+        // Transforma o array em objeto.
+        $student = (object)$student;
+
+        //verifica se o usuário enviado pelo harpia, existe no moodle
+        $userId = self::get_user_by_pes_id($student->pes_id);
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$userId) {
+          throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
+        }
+
+        //verifica se o grupo enviado pelo harpia, existe no moodle
+        $oldGroupId = self::get_group_by_grp_id($student->old_grp_id);
+
+        // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
+        if(!$oldGroupId) {
+          throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->old_grp_id);
+        }
+
+        //Verifica se o aluno está realmente vinculado a esse grupo enviado pelo harpia
+        $studentGroup = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id, 'groupid' => $oldGroupId, 'pes_id' => $student->pes_id), '*');
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$studentGroup) {
+          throw new Exception("O usuário com pes_id:" .$student->pes_id. "não está vinculado em nenhum grupo no moodle com grp_id:" .$student->grp_id );
+        }
+
+        //verifica se o grupo enviado pelo harpia, existe no moodle
+        $newGroupId = self::get_group_by_grp_id($student->new_grp_id);
+
+        // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
+        if(!$newGroupId) {
+          throw new Exception("O grupo ao qual o usuário está sendo inserido não está mapeado com o moodle. grp_id:" .$student->new_grp_id);
+        }
+
+        try{
+
+          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+          $transaction = $DB->start_delegated_transaction();
+
+          //adiciona a bibliteca de grupos do moodle
+          require_once("{$CFG->dirroot}/group/lib.php");
+
+          //chama a função para remover o membro do antigo grupo
+          groups_remove_member($oldGroupId, $userId);
+
+          //chama a função para adicionar o membro no novo grupo
+          groups_add_member($newGroupId, $userId);
+
+          //atualiza a tabela de controle para o novo grupo do usuário
+          $studentGroup->grp_id = $student->new_grp_id;
+          $studentGroup->groupid = $newGroupId;
+          $DB->update_record('int_student_course', $studentGroup);
+
+          // Persiste as operacoes em caso de sucesso.
+          $transaction->allow_commit();
+
+        }catch(Exception $e) {
+          $transaction->rollback($e);
+        }
+
+        // Prepara o array de retorno.
+        $returndata['id'] = $userId;
+        $returndata['status'] = 'success';
+        $returndata['message'] = 'Aluno desvinculado do grupo com sucesso';
+
+        return $returndata;
+    }
+    public static function change_student_group_parameters() {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
+                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                        'old_grp_id' => new external_value(PARAM_INT, 'Id do antigo grupo no gestor'),
+                        'new_grp_id' => new external_value(PARAM_INT, 'Id do novo grupo no gestor')
+                    )
+                )
+            )
+        );
+    }
+
+    public static function change_student_group_returns()
+    {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
 }
