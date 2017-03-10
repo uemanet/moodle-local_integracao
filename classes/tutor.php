@@ -34,53 +34,52 @@ class local_wsintegracao_tutor extends wsintegracao_base{
         // Transforma o array em objeto.
         $tutor = (object)$tutor;
 
-        try{
-
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
-
-          //verifica se o tutor pode ser vinculado ao grupo
-          $data = self::get_enrol_tutor_group_validation_rules($tutor);
-
-          //recebe o valor de courseid, tendo groupid como parâmetro
-          $courseid = self::get_courseid_by_groupid($data['groupid']);
-
-          //vincula o tutor a um curso no moodle
-          self::enrol_user_in_moodle_course($data['userid'], $courseid, self::TUTOR_ROLEID);
-
-          //adiciona a bibliteca de grupos do moodle
-          require_once("{$CFG->dirroot}/group/lib.php");
-
-          //vincula um usuário a um grupo
-          $res = groups_add_member($data['groupid'],$data['userid']);
-
-          if ($res){
-            $tutGroup['pes_id'] = $tutor->pes_id;
-            $tutGroup['userid'] = $data['userid'];
-            $tutGroup['grp_id'] = $tutor->grp_id;
-            $tutGroup['groupid'] = $data['groupid'];
-            $tutGroup['courseid'] = $courseid;
-
-            $result = $DB->insert_record('int_tutor_group', $tutGroup);
-
-            // Persiste as operacoes em caso de sucesso.
-          }
-
-          $transaction->allow_commit();
-        }catch(Exception $e) {
-          $transaction->rollback($e);
-        }
-
-        // Prepara o array de retorno.
         $returndata = null;
-        if($result) {
-            $returndata['id'] = $result->id;
-            $returndata['status'] = 'success';
-            $returndata['message'] = 'Tutor vinculado com sucesso';
-        } else {
-            $returndata['id'] = 0;
-            $returndata['status'] = 'error';
-            $returndata['message'] = 'Erro ao tentar vincular o tutor';
+
+        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+        $transaction = $DB->start_delegated_transaction();
+
+        try{
+            //verifica se o tutor pode ser vinculado ao grupo
+            $data = self::get_enrol_tutor_group_validation_rules($tutor);
+
+            //recebe o valor de courseid, tendo groupid como parâmetro
+            $courseid = self::get_courseid_by_groupid($data['groupid']);
+
+            //vincula o tutor a um curso no moodle
+            $tutor_role = get_config('local_integracao')->tutor_distancia;
+            self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutor_role);
+
+            //adiciona a bibliteca de grupos do moodle
+            require_once("{$CFG->dirroot}/group/lib.php");
+
+            //vincula um usuário a um grupo
+            $res = groups_add_member($data['groupid'],$data['userid']);
+
+            if ($res){
+                $tutGroup['pes_id'] = $tutor->pes_id;
+                $tutGroup['userid'] = $data['userid'];
+                $tutGroup['grp_id'] = $tutor->grp_id;
+                $tutGroup['groupid'] = $data['groupid'];
+                $tutGroup['courseid'] = $courseid;
+
+                $result = $DB->insert_record('int_tutor_group', $tutGroup);
+
+                if($result) {
+                    $returndata['id'] = $result->id;
+                    $returndata['status'] = 'success';
+                    $returndata['message'] = 'Tutor vinculado com sucesso';
+                } else {
+                    $returndata['id'] = 0;
+                    $returndata['status'] = 'error';
+                    $returndata['message'] = 'Erro ao tentar vincular o tutor';
+                }
+            }
+
+            // Persiste as operacoes em caso de sucesso
+            $transaction->allow_commit();
+        } catch (Exception $e) {
+            $transaction->rollback($e);
         }
 
         return $returndata;

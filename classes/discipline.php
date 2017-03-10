@@ -44,9 +44,12 @@ class local_wsintegracao_discipline extends wsintegracao_base
         // Ultima section do curso
         $lastSection = $lastSection->section;
 
+        $returndata = null;
+
+        // Inicia a transação, qualquer erro que aconteça o rollback será executado
+        $transaction = $DB->start_delegated_transaction();
+
         try {
-            // Inicia a transação, qualquer erro que aconteça o rollback será executado
-            $transaction = $DB->start_delegated_transaction();
 
             // Insere nova section no curso
             $section['course'] = $courseId;
@@ -54,7 +57,6 @@ class local_wsintegracao_discipline extends wsintegracao_base
             $section['name'] = $discipline->name;
             $section['summaryformat'] = 1;
             $section['visible'] = 1;
-
 
             $section['id'] = $DB->insert_record('course_sections', $section);
 
@@ -75,36 +77,37 @@ class local_wsintegracao_discipline extends wsintegracao_base
             }
 
             // Atribui o professor ao curso
-            self::enrol_user_in_moodle_course($userId, $courseId, self::TEACHER_ROLEID);
+            $professor_role = get_config('local_integracao')->professor;
+            self::enrol_user_in_moodle_course($userId, $courseId, $professor_role);
 
             // Adiciona as informações na tabela de controle entre as ofertas de disciplina e as sections
             $data['ofd_id'] = $discipline->ofd_id;
             $data['sectionid'] = $section['id'];
             $data['pes_id'] = $discipline->pes_id;
+
             $res = $DB->insert_record('int_discipline_section', $data);
+
+            // Prepara o array de retorno.
+            if ($res) {
+                $returndata['id'] = $section['id'];
+                $returndata['status'] = 'success';
+                $returndata['message'] = 'Disciplina criada com sucesso';
+            } else {
+                $returndata['id'] = 0;
+                $returndata['status'] = 'error';
+                $returndata['message'] = 'Erro ao tentar criar disciplina';
+            }
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
 
-              } catch(Exception $e) {
-                  $transaction->rollback($e);
-        }
-
-        // Prepara o array de retorno.
-        $returndata = null;
-        if($res) {
-            $returndata['id'] = $section['id'];
-            $returndata['status'] = 'success';
-            $returndata['message'] = 'Disciplina criada com sucesso';
-        } else {
-            $returndata['id'] = 0;
-            $returndata['status'] = 'error';
-            $returndata['message'] = 'Erro ao tentar criar disciplina';
+        } catch (Exception $e) {
+            $transaction->rollback($e);
         }
 
         // Recria o cache do curso
         require_once($CFG->libdir . "/modinfolib.php");
-        rebuild_course_cache($courseid, true);
+        rebuild_course_cache($courseId, true);
 
         return $returndata;
     }
