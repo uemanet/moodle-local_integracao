@@ -161,7 +161,6 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         return $result;
     }
-<<<<<<< HEAD
 
     public static function unenrol_student_group($student) {
         global $CFG, $DB;
@@ -251,6 +250,4 @@ class local_wsintegracao_student extends wsintegracao_base{
         );
     }
 
-=======
->>>>>>> 4170fa5ddfb9b5eca7d26cb40cde455702d9f662
 }
