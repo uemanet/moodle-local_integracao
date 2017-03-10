@@ -79,6 +79,13 @@ $functions = array(
         'description' => 'Enrol a student',
         'type' => 'write'
     ),
+    'local_integracao_unenrol_student_group' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'unenrol_student_group',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Unenrol a student from a group',
+        'type' => 'write'
+    ),
     'local_integracao_create_discipline' => array(
         'classname' => 'local_wsintegracao_discipline',
         'methodname' => 'create_discipline',
@@ -124,6 +131,7 @@ $services = array(
                              'local_integracao_update_group',
                              'local_integracao_enrol_tutor',
                              'local_integracao_enrol_student',
+                             'local_integracao_unenrol_student_group',
                              'local_integracao_enrol_student_discipline',
                              'local_integracao_create_discipline',
                              'local_integracao_update_user',

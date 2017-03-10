@@ -33,7 +33,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Transforma o array em objeto.
         $student = (object)$student;
-        
+
         try{
           // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
           $transaction = $DB->start_delegated_transaction();
@@ -170,6 +170,94 @@ class local_wsintegracao_student extends wsintegracao_base{
         $result['courseid'] = $courseid;
 
         return $result;
+    }
+
+    public static function unenrol_student_group($student) {
+        global $CFG, $DB;
+
+        // Validação dos paramêtros
+        $params = self::validate_parameters(self::unenrol_student_group_parameters(), array('student' => $student));
+
+        // Transforma o array em objeto.
+        $student = (object)$student;
+
+        //verifica se o usuário enviado pelo harpia, existe no moodle
+        $userId = self::get_user_by_pes_id($student->pes_id);
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$userId) {
+          throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
+        }
+
+        //verifica se o grupo enviado pelo harpia, existe no moodle
+        $groupId = self::get_group_by_grp_id($student->grp_id);
+
+        // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
+        if(!$groupId) {
+          throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->grp_id);
+        }
+
+        //Verifica se o aluno está realmente vinculado a esse grupo
+        $studentGroup = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id, 'groupid' => $groupId, 'pes_id' => $student->pes_id), '*');
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$studentGroup) {
+          throw new Exception("O usuário com pes_id:" .$student->pes_id. "não está vinculado em nenhum grupo no moodle com grp_id:" .$student->grp_id );
+        }
+
+        try{
+
+          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+          $transaction = $DB->start_delegated_transaction();
+
+          //adiciona a bibliteca de grupos do moodle
+          require_once("{$CFG->dirroot}/group/lib.php");
+
+          //chama a função para remover o membro do grupo
+          groups_remove_member($groupId, $userId);
+
+          //atualiza a tabela de controle para que o usuário não esteja mais vinculado a um grupo
+          $studentGroup->grp_id = null;
+          $studentGroup->groupid = null;
+          $DB->update_record('int_student_course', $studentGroup);
+
+          // Persiste as operacoes em caso de sucesso.
+          $transaction->allow_commit();
+
+        }catch(Exception $e) {
+          $transaction->rollback($e);
+        }
+
+        // Prepara o array de retorno.
+        $returndata['id'] = $userId;
+        $returndata['status'] = 'success';
+        $returndata['message'] = 'Aluno desvinculado do grupo com sucesso';
+
+        return $returndata;
+    }
+    public static function unenrol_student_group_parameters() {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
+                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+                    )
+                )
+            )
+        );
+    }
+
+    public static function unenrol_student_group_returns()
+    {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
     }
 
 }
