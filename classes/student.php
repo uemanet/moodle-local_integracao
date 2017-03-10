@@ -122,10 +122,10 @@ class local_wsintegracao_student extends wsintegracao_base{
 
     public static function change_role_student_course($student)
     {
-        global $CFG, $DB;
+        global $DB;
 
         // validação dos parâmetros
-        self::validate_parameters(self::change_role_student_course_parameters(), array('student', $student));
+        self::validate_parameters(self::change_role_student_course_parameters(), array('student' => $student));
 
         // Transforma o array em objeto
         $student = (object)$student;
@@ -150,10 +150,8 @@ class local_wsintegracao_student extends wsintegracao_base{
         $isMatriculado = $DB->get_record('user_enrolments', array('enrolid' => $instance->id, 'userid' => $userid));
 
         if (!$isMatriculado) {
-            throw new coding_exception('Usuario não matriculado na turma.');
+            throw new coding_exception('Usuario não matriculado na turma. trm_id: '. $student->trm_id.', pes_id: '.$student->pes_id);
         }
-
-        $message = '';
 
         // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
         $transaction = $DB->start_delegated_transaction();
@@ -178,37 +176,28 @@ class local_wsintegracao_student extends wsintegracao_base{
             // pega a instancia de mdl_role_assignments de acordo com o usuario e o contexto do curso
             $role_assignment = $DB->get_record('role_assignments', array('userid' => $userid, 'contextid' => $context->id));
 
-            // atualiza a role do aluno
-            $role_assignment->roleid = $roleid;
-            $DB->update_record('role_assignments', $role_assignment);
+            if ($role_assignment) {
+                // atualiza a role do aluno
+                $role_assignment->roleid = $roleid;
+                $DB->update_record('role_assignments', $role_assignment);
 
-            context_course::instance($instance->courseid)->mark_dirty(); // reset enrol caches
+                $transaction->allow_commit();
 
-            // Trigger event.
-            $event = \core\event\user_enrolment_updated::create(
-                array(
-                    'objectid' => $isMatriculado->id,
-                    'courseid' => $instance->courseid,
-                    'context' => context_course::instance($instance->courseid),
-                    'relateduserid' => $isMatriculado->userid,
-                    'other' => array('enrol' => 'manual')
-                )
-            );
-
-            $event->trigger();
-            
-            $transaction->allow_commit();
-            
-            $message = 'Status da Matricula alterado com sucesso';
+                return array(
+                    'id' => $role_assignment->id,
+                    'status' => 'success',
+                    'message' => 'Status da Matricula alterado com sucesso'
+                );
+            }
 
         } catch(Exception $e) {
             $transaction->rollback($e);
         }
 
         return array(
-            'id' => $role_assignment->id,
-            'status' => 'success',
-            'message' => $message
+            'id' => $userid,
+            'status' => 'error',
+            'message' => 'Usuario não possui papel atribuido no curso'
         );
 
     }
