@@ -37,6 +37,13 @@ $functions = array(
         'description' => 'Update a course',
         'type' => 'write'
     ),
+    'local_integracao_delete_course' => array(
+        'classname' => 'local_wsintegracao_course',
+        'methodname' => 'remove_course',
+        'classpath' => 'local/integracao/classes/course.php',
+        'description' => 'Delete a course',
+        'type' => 'write'
+    ),
     'local_integracao_create_group' => array(
         'classname' => 'local_wsintegracao_group',
         'methodname' => 'create_group',
@@ -71,26 +78,12 @@ $functions = array(
         'classpath' => 'local/integracao/classes/tutor.php',
         'description' => 'Unenrol a tutor from a group',
         'type' => 'write'
-    ),
-    'ping' => array(
-        'classname' => 'local_wsintegracao_ping',
-        'methodname' => 'ping',
-        'classpath' => 'local/integracao/classes/ping.php',
-        'description' => 'Ping function',
-        'type' => 'read'
-    ),
+    ),    
     'local_integracao_enrol_student' => array(
         'classname' => 'local_wsintegracao_student',
         'methodname' => 'enrol_student',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Enrol a student',
-        'type' => 'write'
-    ),
-    'local_integracao_unenrol_student_group' => array(
-        'classname' => 'local_wsintegracao_student',
-        'methodname' => 'unenrol_student_group',
-        'classpath' => 'local/integracao/classes/student.php',
-        'description' => 'Unenrol a student from a group',
         'type' => 'write'
     ),
     'local_integracao_change_role_student_course' => array(
@@ -100,6 +93,20 @@ $functions = array(
         'description' => 'Change role for student in a course',
         'type' => 'write'
     ),
+    'local_integracao_change_student_group' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'change_student_group',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Change a student from a group',
+        'type' => 'write'
+    ),
+    'local_integracao_unenrol_student_group' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'unenrol_student_group',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Unenrol a student from a group',
+        'type' => 'write'
+    ),    
     'local_integracao_create_discipline' => array(
         'classname' => 'local_wsintegracao_discipline',
         'methodname' => 'create_discipline',
@@ -114,6 +121,13 @@ $functions = array(
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
     ),
+    'local_integracao_delete_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'remove_discipline',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Delete a discipline',
+        'type' => 'write'
+    ),
     'local_integracao_update_user' => array(
         'classname' => 'local_wsintegracao_user',
         'methodname' => 'update_user',
@@ -121,19 +135,12 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-    'local_integracao_delete_course' => array(
-        'classname' => 'local_wsintegracao_course',
-        'methodname' => 'remove_course',
-        'classpath' => 'local/integracao/classes/course.php',
-        'description' => 'Delete a course',
-        'type' => 'write'
-    ),
-    'local_integracao_delete_discipline' => array(
-        'classname' => 'local_wsintegracao_discipline',
-        'methodname' => 'remove_discipline',
-        'classpath' => 'local/integracao/classes/discipline.php',
-        'description' => 'Delete a discipline',
-        'type' => 'write'
+    'ping' => array(
+        'classname' => 'local_wsintegracao_ping',
+        'methodname' => 'ping',
+        'classpath' => 'local/integracao/classes/ping.php',
+        'description' => 'Ping function',
+        'type' => 'read'
     ),
 );
 
@@ -142,18 +149,20 @@ $services = array(
         'functions' => array(
             'local_integracao_create_course',
             'local_integracao_update_course',
+            'local_integracao_delete_course',
             'local_integracao_create_group',
             'local_integracao_update_group',
-            'local_integracao_enrol_tutor',
-            'local_integracao_enrol_student',
-            'local_integracao_unenrol_student_group',
-            'local_integracao_change_role_student_course',
-            'local_integracao_enrol_student_discipline',
-            'local_integracao_create_discipline',
-            'local_integracao_update_user',
-            'local_integracao_delete_course',
             'local_integracao_delete_group',
+            'local_integracao_enrol_tutor',
+            'local_integracao_unenrol_tutor_group',
+            'local_integracao_enrol_student',
+            'local_integracao_change_role_student_course',
+            'local_integracao_change_student_group',
+            'local_integracao_unenrol_student_group',
+            'local_integracao_create_discipline',
+            'local_integracao_enrol_student_discipline',
             'local_integracao_delete_discipline',
+            'local_integracao_update_user',
             'ping'
         ),
         'restrictedusers' => 0,
