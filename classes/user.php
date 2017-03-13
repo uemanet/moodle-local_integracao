@@ -25,11 +25,12 @@ require_once("base.php");
 
 class local_wsintegracao_user extends wsintegracao_base{
 
-    public static function update_user($user) {
+    public static function update_user($user)
+    {
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::update_user_parameters(), array('user' => $user));
+        self::validate_parameters(self::update_user_parameters(), array('user' => $user));
 
         //verifica se o o usuário enviado pelo harpia, existe no moodle
         $user['id'] = self::get_user_by_pes_id($user['pes_id']);
@@ -43,7 +44,6 @@ class local_wsintegracao_user extends wsintegracao_base{
         $user = (object)$user;
 
         try{
-
           // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
           $transaction = $DB->start_delegated_transaction();
 
@@ -54,7 +54,7 @@ class local_wsintegracao_user extends wsintegracao_base{
           // Persiste as operacoes em caso de sucesso.
           $transaction->allow_commit();
 
-        }catch(Exception $e) {
+        } catch (Exception $e) {
           $transaction->rollback($e);
         }
 
@@ -65,7 +65,9 @@ class local_wsintegracao_user extends wsintegracao_base{
 
         return $returndata;
     }
-    public static function update_user_parameters() {
+
+    public static function update_user_parameters()
+    {
         return new external_function_parameters(
             array(
                 'user' => new external_single_structure(

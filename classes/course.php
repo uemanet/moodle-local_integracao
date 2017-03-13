@@ -29,7 +29,7 @@ class local_wsintegracao_course extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::create_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::create_course_parameters(), array('course' => $course));
 
         // Transforma o array em objeto.
         $course = (object)$course;
@@ -39,41 +39,47 @@ class local_wsintegracao_course extends wsintegracao_base {
 
         // Adiciona a bibliteca de curso do moodle
         require_once("{$CFG->dirroot}/course/lib.php");
+
+        $returndata = null;
+
         try{
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Cria o curso usando a biblioteca do proprio moodle.
-          $result = create_course($course);
+            // Cria o curso usando a biblioteca do proprio moodle.
+            $result = create_course($course);
 
-          // Caso o curso tenha sido criado adiciona na tabela de controle os dados do curso e da turma.
-          if($result->id) {
-            $data['trm_id'] = $course->trm_id;
-            $data['courseid'] = $result->id;
+            // Caso o curso tenha sido criado adiciona na tabela de controle os dados do curso e da turma.
+            $res = null;
 
-            $res = $DB->insert_record('int_turma_course', $data);
-          }
+            if($result->id) {
+                $data['trm_id'] = $course->trm_id;
+                $data['courseid'] = $result->id;
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
+                $res = $DB->insert_record('int_turma_course', $data);
+            }
 
-        }catch(Exception $e) {
+            // Prepara o array de retorno.
+            if($res) {
+                $returndata['id'] = $result->id;
+                $returndata['status'] = 'success';
+                $returndata['message'] = 'Curso criado com sucesso';
+            } else {
+                $returndata['id'] = 0;
+                $returndata['status'] = 'error';
+                $returndata['message'] = 'Erro ao tentar criar o curso';
+            }
+
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+
+        } catch (Exception $e) {
             $transaction->rollback($e);
-          }
-
-        // Prepara o array de retorno.
-        if($res) {
-            $returndata['id'] = $result->id;
-            $returndata['status'] = 'success';
-            $returndata['message'] = 'Curso criado com sucesso';
-        } else {
-            $returndata['id'] = 0;
-            $returndata['status'] = 'error';
-            $returndata['message'] = 'Erro ao tentar criar o curso';
         }
 
         return $returndata;
     }
+
     public static function create_course_parameters() {
         return new external_function_parameters(
             array(
@@ -91,6 +97,7 @@ class local_wsintegracao_course extends wsintegracao_base {
             )
         );
     }
+
     public static function create_course_returns() {
         return new external_single_structure(
             array(
@@ -105,7 +112,7 @@ class local_wsintegracao_course extends wsintegracao_base {
         global $CFG, $DB;
 
         // Valida os parametros.
-        $params = self::validate_parameters(self::update_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::update_course_parameters(), array('course' => $course));
 
         // Inlcui a biblioteca de cursos do moodle
         require_once("{$CFG->dirroot}/course/lib.php");
@@ -113,39 +120,41 @@ class local_wsintegracao_course extends wsintegracao_base {
         // Transforma o array em objeto.
         $course = (object)$course;
 
+        $returndata = null;
+
         try{
 
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Busca o id do curso apartir do trm_id da turma.
-          $courseid = self::get_course_by_trm_id($course->trm_id);
+            // Busca o id do curso apartir do trm_id da turma.
+            $courseid = self::get_course_by_trm_id($course->trm_id);
 
-          // Se nao existir curso mapeado para a turma dispara uma excessao.
-          if($courseid) {
+            // Se nao existir curso mapeado para a turma dispara uma excessao.
+            if(!$courseid) {
+                throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
+            }
+
             $course->id = $courseid;
-          } else {
-            throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
-          }
 
-          // Atualiza o curso usando a biblioteca do proprio moodle.
-          update_course($course);
+            // Atualiza o curso usando a biblioteca do proprio moodle.
+            update_course($course);
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+
+            // Prepara o array de retorno.
+            $returndata['id'] = $courseid;
+            $returndata['status'] = 'success';
+            $returndata['message'] = "Curso atualizado com sucesso";
 
         }catch(Exception $e) {
             $transaction->rollback($e);
-          }
-
-
-        // Prepara o array de retorno.
-        $returndata['id'] = $courseid;
-        $returndata['status'] = 'success';
-        $returndata['message'] = "Curso atualizado com sucesso";
+        }
 
         return $returndata;
     }
+
     public static function update_course_parameters() {
         return new external_function_parameters(
             array(
@@ -159,6 +168,7 @@ class local_wsintegracao_course extends wsintegracao_base {
             )
         );
     }
+
     public static function update_course_returns() {
         return new external_single_structure(
             array(
@@ -168,11 +178,12 @@ class local_wsintegracao_course extends wsintegracao_base {
             )
         );
     }
+
     public static function remove_course($course) {
         global $CFG, $DB;
 
         // Valida os parametros.
-        $params = self::validate_parameters(self::remove_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::remove_course_parameters(), array('course' => $course));
 
         // Inlcui a biblioteca de cursos do moodle
         require_once("{$CFG->dirroot}/lib/moodlelib.php");
@@ -184,40 +195,39 @@ class local_wsintegracao_course extends wsintegracao_base {
         $courseid = self::get_course_by_trm_id($course->trm_id);
 
         // Se nao existir curso mapeado para a turma dispara uma excessao.
-        if($courseid) {
-          $course->id = $courseid;
-        } else {
-          throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
+        if(!$courseid) {
+            throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $course->trm_id);
         }
 
+        $course->id = $courseid;
+
+        $returndata = null;
+
         try{
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            // Deleta o curso usando a biblioteca do proprio moodle.
+            delete_course($courseid,false);
 
-          // Deleta o curso usando a biblioteca do proprio moodle.
-          delete_course($courseid,false);
+            //deleta os registros da tabela de controle
+            $DB->delete_records('int_turma_course', array('courseid'=>$courseid));
 
-          //deleta os registros da tabela de controle
-          $DB->delete_records('int_turma_course', array('courseid'=>$courseid));
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
 
-          // Prepara o array de retorno.
-          $returndata['id'] = 1;
-          $returndata['status'] = 'success';
-          $returndata['message'] = "Curso excluído com sucesso";
+            // Prepara o array de retorno.
+            $returndata['id'] = 1;
+            $returndata['status'] = 'success';
+            $returndata['message'] = "Curso excluído com sucesso";
 
-          return $returndata;
-
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
-
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             $transaction->rollback($e);
-          }
+        }
 
-
-
+        return $returndata;
     }
+
     public static function remove_course_parameters() {
         return new external_function_parameters(
             array(
@@ -229,6 +239,7 @@ class local_wsintegracao_course extends wsintegracao_base {
             )
         );
     }
+
     public static function remove_course_returns() {
         return new external_single_structure(
             array(
@@ -238,10 +249,12 @@ class local_wsintegracao_course extends wsintegracao_base {
             )
         );
     }
+
     protected static function get_create_course_validation_rules($course)
     {
         //Verifica se a turma já está mapeada para algum curso do ambiente
         $courseid = self::get_course_by_trm_id($course->trm_id);
+
         // Dispara uma excessao se essa turma ja estiver mapeada para um curso.
         if($courseid) {
             throw new Exception("Essa turma ja esta mapeada com o curso de id: " . $courseid);

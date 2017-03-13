@@ -36,10 +36,10 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
         $returndata = null;
 
-        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-        $transaction = $DB->start_delegated_transaction();
-
         try{
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
+
             //verifica se o tutor pode ser vinculado ao grupo
             $data = self::get_enrol_tutor_group_validation_rules($tutor);
 
@@ -121,6 +121,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
         //verifica se o grupo existe
         $groupid = self::get_group_by_grp_id($tutor->grp_id);
+
         // Dispara uma excessao caso o grupo com grp_id informado não exista
         if(!$groupid) {
           throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$tutor->grp_id);
@@ -142,6 +143,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
 
         //verifica se o tutor pode ser vinculado ao grupo
         $tutGroup = $DB->get_record('int_tutor_group', array('pes_id' => $tutor->pes_id, 'groupid' => $groupid), '*');
+
         if ($tutGroup) {
             throw new Exception("O tutor de pes_id " .$tutor->pes_id. " já está vinculado ao grupo de groupid ".$groupid);
         }
@@ -158,7 +160,7 @@ class local_wsintegracao_tutor extends wsintegracao_base{
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::unenrol_tutor_group_parameters(), array('tutor' => $tutor));
+        self::validate_parameters(self::unenrol_tutor_group_parameters(), array('tutor' => $tutor));
 
         // Transforma o array em objeto.
         $tutor = (object)$tutor;
