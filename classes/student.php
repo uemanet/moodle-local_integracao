@@ -29,17 +29,17 @@ class local_wsintegracao_student extends wsintegracao_base{
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
+        self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
 
         // Transforma o array em objeto.
         $student = (object)$student;
 
         $returndata = null;
 
-        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-        $transaction = $DB->start_delegated_transaction();
-
         try{
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
+
             //verifica se o aluno pode ser matriculado no curso
             $data = self::get_enrol_student_course_validation_rules($student);
 
@@ -48,11 +48,12 @@ class local_wsintegracao_student extends wsintegracao_base{
             self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], $student_role);
 
             if ($data['groupid']) {
+
                 //adiciona a bibliteca de grupos do moodle
                 require_once("{$CFG->dirroot}/group/lib.php");
 
                 //vincula um usuário a um grupo
-                $res = groups_add_member($data['groupid'],$data['userid']);
+                groups_add_member($data['groupid'],$data['userid']);
             }
 
             //prepara os dados que serão inseridos na tabela de controle
@@ -68,7 +69,6 @@ class local_wsintegracao_student extends wsintegracao_base{
             $result = $DB->insert_record('int_student_course', $aluCourse);
 
             // Prepara o array de retorno.
-
             if ($result) {
                 $returndata['id'] = $result->id;
                 $returndata['status'] = 'success';
@@ -78,9 +78,9 @@ class local_wsintegracao_student extends wsintegracao_base{
                 $returndata['status'] = 'error';
                 $returndata['message'] = 'Erro ao tentar matricular o aluno';
             }
-
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
+
         } catch (Exception $e) {
             $transaction->rollback($e);
         }
@@ -120,23 +120,134 @@ class local_wsintegracao_student extends wsintegracao_base{
         );
     }
 
+    public static function change_role_student_course($student)
+    {
+        global $DB;
+
+        // validação dos parâmetros
+        self::validate_parameters(self::change_role_student_course_parameters(), array('student' => $student));
+
+        // Transforma o array em objeto
+        $student = (object)$student;
+
+        // verifica se o aluno existe no moodle
+        $userid = self::get_user_by_pes_id($student->pes_id);
+
+        if (!$userid) {
+            throw new Exception("Não existe um aluno cadastrado no moodle com pes_id:" .$student->pes_id);
+        }
+
+        // verifica se existe um curso mapeado no moodle com a turma do aluno
+        $courseid = self::get_course_by_trm_id($student->trm_id);
+
+        if(!$courseid) {
+            throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
+        }
+
+        $instance = self::get_course_enrol($courseid);
+
+        // verifica se o aluno está matriculado no curso
+        $isMatriculado = $DB->get_record('user_enrolments', array('enrolid' => $instance->id, 'userid' => $userid));
+
+        if (!$isMatriculado) {
+            throw new coding_exception('Usuario não matriculado na turma. trm_id: '. $student->trm_id.', pes_id: '.$student->pes_id);
+        }
+
+        try {
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
+
+            // pega o centexto do curso
+            $context = context_course::instance($courseid);
+
+            // pega as configuraçoes do plugin
+            $config = get_config('local_integracao');
+
+            // pega o id da role de acordo com o novo status
+            $roleid = null;
+            if ($student->new_status == 'concluido') {
+                $roleid = $config->aluno_concluido;
+            } else if ($student->new_status == 'reprovado') {
+                $roleid = $config->aluno_reprovado;
+            } else if ($student->new_status == 'trancado') {
+                $roleid = $config->aluno_trancado;
+            }
+
+            // pega a instancia de mdl_role_assignments de acordo com o usuario e o contexto do curso
+            $role_assignment = $DB->get_record('role_assignments', array('userid' => $userid, 'contextid' => $context->id));
+
+            if ($role_assignment) {
+                // atualiza a role do aluno
+                $role_assignment->roleid = $roleid;
+                $DB->update_record('role_assignments', $role_assignment);
+
+                $transaction->allow_commit();
+
+                return array(
+                    'id' => $role_assignment->id,
+                    'status' => 'success',
+                    'message' => 'Status da Matricula alterado com sucesso'
+                );
+            }
+
+        } catch(Exception $e) {
+            $transaction->rollback($e);
+        }
+
+        return array(
+            'id' => $userid,
+            'status' => 'error',
+            'message' => 'Usuario não possui papel atribuido no curso'
+        );
+
+    }
+
+    public static function change_role_student_course_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no gestor'),
+                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                        'new_status' => new external_value(PARAM_TEXT, 'Novo status da matricula do aluno no gestor')
+                    )
+                )
+            )
+        );
+    }
+
+    public static function change_role_student_course_returns()
+    {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
     public static function get_enrol_student_course_validation_rules($student){
         global $CFG, $DB;
 
-        //verifica se a matricula passada pelo harpia já está mapeada com o moodle
-        $matricula = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id), '*');
-        if ($matricula) {
-          throw new Exception("A matricula de mat_id: " .$student->mat_id. " já está mapeada no moodle com o course de id:".$courseid);
-        }
-
         //verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia
         $courseid = self::get_course_by_trm_id($student->trm_id);
+
         if(!$courseid) {
-          throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
+            throw new Exception("Não existe uma turma mapeada no moodle com trm_id:" .$student->trm_id);
+        }
+
+        //verifica se a matricula passada pelo harpia já está mapeada com o moodle
+        $matricula = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id), '*');
+
+        if ($matricula) {
+            throw new Exception("A matricula de mat_id: " .$student->mat_id. " já está mapeada no moodle com o course de id:".$courseid);
         }
 
         //verifica se o campo de grupo existe, se existir, pegar o seu id no lado do moodle
         $result['groupid'] = null;
+
         if ($student->grp_id){
 
           $groupid = self::get_group_by_grp_id($student->grp_id);
@@ -145,12 +256,14 @@ class local_wsintegracao_student extends wsintegracao_base{
           if(!$groupid) {
             throw new Exception("Não existe um grupo mapeado no moodle com grp_id:" .$student->grp_id);
           }
+
           //coloca o valor de groupid em um array de retorno
           $result['groupid'] = $groupid;
         }
 
         //verifica se o o usuário enviado pelo harpia, existe no moodle
         $userid = self::get_user_by_pes_id($student->pes_id);
+
         //se ele não existir, criar o usuário e adicioná-lo na tabela de controle
         if(!$userid){
 
@@ -180,7 +293,7 @@ class local_wsintegracao_student extends wsintegracao_base{
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::change_student_group_parameters(), array('student' => $student));
+        self::validate_parameters(self::change_student_group_parameters(), array('student' => $student));
 
         // Transforma o array em objeto.
         $student = (object)$student;
@@ -190,7 +303,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
         if(!$userId) {
-          throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
+            throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
         }
 
         //verifica se o grupo enviado pelo harpia, existe no moodle
@@ -198,7 +311,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
         if(!$oldGroupId) {
-          throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->old_grp_id);
+            throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->old_grp_id);
         }
 
         //Verifica se o aluno está realmente vinculado a esse grupo enviado pelo harpia
@@ -206,7 +319,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
         if(!$studentGroup) {
-          throw new Exception("O usuário com pes_id:" .$student->pes_id. "não está vinculado em nenhum grupo no moodle com grp_id:" .$student->grp_id );
+            throw new Exception("O usuário com pes_id:" .$student->pes_id. "não está vinculado em nenhum grupo no moodle com grp_id:" .$student->grp_id );
         }
 
         //verifica se o grupo enviado pelo harpia, existe no moodle
@@ -214,33 +327,32 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
         if(!$newGroupId) {
-          throw new Exception("O grupo ao qual o usuário está sendo inserido não está mapeado com o moodle. grp_id:" .$student->new_grp_id);
+            throw new Exception("O grupo ao qual o usuário está sendo inserido não está mapeado com o moodle. grp_id:" .$student->new_grp_id);
         }
 
         try{
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            //adiciona a bibliteca de grupos do moodle
+            require_once("{$CFG->dirroot}/group/lib.php");
 
-          //adiciona a bibliteca de grupos do moodle
-          require_once("{$CFG->dirroot}/group/lib.php");
+            //chama a função para remover o membro do antigo grupo
+            groups_remove_member($oldGroupId, $userId);
 
-          //chama a função para remover o membro do antigo grupo
-          groups_remove_member($oldGroupId, $userId);
+            //chama a função para adicionar o membro no novo grupo
+            groups_add_member($newGroupId, $userId);
 
-          //chama a função para adicionar o membro no novo grupo
-          groups_add_member($newGroupId, $userId);
+            //atualiza a tabela de controle para o novo grupo do usuário
+            $studentGroup->grp_id = $student->new_grp_id;
+            $studentGroup->groupid = $newGroupId;
+            $DB->update_record('int_student_course', $studentGroup);
 
-          //atualiza a tabela de controle para o novo grupo do usuário
-          $studentGroup->grp_id = $student->new_grp_id;
-          $studentGroup->groupid = $newGroupId;
-          $DB->update_record('int_student_course', $studentGroup);
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
-
-        }catch(Exception $e) {
-          $transaction->rollback($e);
+        } catch (Exception $e) {
+            $transaction->rollback($e);
         }
 
         // Prepara o array de retorno.
@@ -250,6 +362,7 @@ class local_wsintegracao_student extends wsintegracao_base{
 
         return $returndata;
     }
+
     public static function change_student_group_parameters() {
         return new external_function_parameters(
             array(
@@ -266,6 +379,94 @@ class local_wsintegracao_student extends wsintegracao_base{
     }
 
     public static function change_student_group_returns()
+    {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
+    public static function unenrol_student_group($student) {
+        global $CFG, $DB;
+
+        // Validação dos paramêtros
+        self::validate_parameters(self::unenrol_student_group_parameters(), array('student' => $student));
+
+        // Transforma o array em objeto.
+        $student = (object)$student;
+
+        //verifica se o usuário enviado pelo harpia, existe no moodle
+        $userId = self::get_user_by_pes_id($student->pes_id);
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$userId) {
+            throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
+        }
+
+        //verifica se o grupo enviado pelo harpia, existe no moodle
+        $groupId = self::get_group_by_grp_id($student->grp_id);
+
+        // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
+        if(!$groupId) {
+            throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->grp_id);
+        }
+
+        //Verifica se o aluno está realmente vinculado a esse grupo
+        $studentGroup = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id, 'groupid' => $groupId, 'pes_id' => $student->pes_id), '*');
+
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
+        if(!$studentGroup) {
+            throw new Exception("O usuário com pes_id:" .$student->pes_id. "não está vinculado em nenhum grupo no moodle com grp_id:" .$student->grp_id );
+        }
+
+        try{
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
+
+            //adiciona a bibliteca de grupos do moodle
+            require_once("{$CFG->dirroot}/group/lib.php");
+
+            //chama a função para remover o membro do grupo
+            groups_remove_member($groupId, $userId);
+
+            //atualiza a tabela de controle para que o usuário não esteja mais vinculado a um grupo
+            $studentGroup->grp_id = null;
+            $studentGroup->groupid = null;
+            $DB->update_record('int_student_course', $studentGroup);
+
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+
+        } catch (Exception $e) {
+            $transaction->rollback($e);
+        }
+
+        // Prepara o array de retorno.
+        $returndata['id'] = $userId;
+        $returndata['status'] = 'success';
+        $returndata['message'] = 'Aluno desvinculado do grupo com sucesso';
+
+        return $returndata;
+    }
+
+    public static function unenrol_student_group_parameters() {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
+                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+                    )
+                )
+            )
+        );
+    }
+
+    public static function unenrol_student_group_returns()
     {
         return new external_single_structure(
             array(
