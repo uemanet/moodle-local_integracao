@@ -65,6 +65,13 @@ $functions = array(
         'description' => 'Enrol a tutor',
         'type' => 'write'
     ),
+    'local_integracao_unenrol_tutor_group' => array(
+        'classname' => 'local_wsintegracao_tutor',
+        'methodname' => 'unenrol_tutor_group',
+        'classpath' => 'local/integracao/classes/tutor.php',
+        'description' => 'Unenrol a tutor from a group',
+        'type' => 'write'
+    ),
     'ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
@@ -131,14 +138,15 @@ $services = array(
             'local_integracao_create_group',
             'local_integracao_update_group',
             'local_integracao_enrol_tutor',
+            'local_integracao_unenrol_tutor_group',
             'local_integracao_enrol_student',
             'local_integracao_enrol_student_discipline',
+            'local_integracao_change_role_student_course',
             'local_integracao_create_discipline',
             'local_integracao_update_user',
             'local_integracao_delete_course',
             'local_integracao_delete_group',
             'local_integracao_delete_discipline',
-            'local_integracao_change_role_student_course',
             'ping'
         ),
         'restrictedusers' => 0,
