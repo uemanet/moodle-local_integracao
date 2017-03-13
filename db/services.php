@@ -120,26 +120,36 @@ $functions = array(
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Delete a discipline',
         'type' => 'write'
+    ),
+    'local_integracao_change_role_student_course' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'change_role_student_course',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Change role for student in a course',
+        'type' => 'write'
     )
 );
 
 $services = array(
     'Integracao' => array(
-        'functions' => array('local_integracao_create_course',
-                             'local_integracao_update_course',
-                             'local_integracao_create_group',
-                             'local_integracao_update_group',
-                             'local_integracao_enrol_tutor',
-                             'local_integracao_unenrol_tutor_group',
-                             'local_integracao_enrol_student',
-                             'local_integracao_enrol_student_discipline',
-                             'local_integracao_create_discipline',
-                             'local_integracao_update_user',
-                             'local_integracao_delete_course',
-                             'local_integracao_delete_group',
-                             'local_integracao_delete_discipline',
-                             'ping'),
-                             'restrictedusers' => 0,
-                             'enabled' => 1
+        'functions' => array(
+            'local_integracao_create_course',
+            'local_integracao_update_course',
+            'local_integracao_create_group',
+            'local_integracao_update_group',
+            'local_integracao_enrol_tutor',
+            'local_integracao_unenrol_tutor_group',
+            'local_integracao_enrol_student',
+            'local_integracao_enrol_student_discipline',
+            'local_integracao_change_role_student_course',
+            'local_integracao_create_discipline',
+            'local_integracao_update_user',
+            'local_integracao_delete_course',
+            'local_integracao_delete_group',
+            'local_integracao_delete_discipline',
+            'ping'
+        ),
+        'restrictedusers' => 0,
+        'enabled' => 1
     )
 );
