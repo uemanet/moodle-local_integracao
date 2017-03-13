@@ -167,30 +167,4 @@ class wsintegracao_base extends external_api
         return current($DB->get_records_sql($sql, $params));
     }
 
-//    protected static function verify_user_enrol_in_course($courseid, $userid)
-//    {
-//        global $DB;
-//
-////        $sql = "SELECT *
-////                FROM {enrol} e
-////                JOIN {user_enrolments} ue ON e.id = ue.enrolid
-////                WHERE e.courseid = :courseid
-////                AND  ue.userid = :userid";
-////
-////        $params = [];
-////        $params['courseid'] = $courseid;
-////        $params['userid'] = $userid;
-////
-////        $result = $DB->get_records_sql($sql, $params);
-//
-//        $instance = self::get_course_enrol($courseid);
-//
-//        $result = $DB->get_record('user_enrolments', array('enrolid' => $instance->id, 'userid' => $userid));
-//
-//        if (!$result) {
-//            throw new coding_exception('Usuario não matriculado na turma');
-//        }
-//
-//        return $result;
-//    }
 }
