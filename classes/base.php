@@ -166,4 +166,5 @@ class wsintegracao_base extends external_api
 
         return current($DB->get_records_sql($sql, $params));
     }
+
 }

@@ -29,7 +29,7 @@ class local_wsintegracao_group extends wsintegracao_base{
         global $CFG, $DB;
 
         // Validação dos paramêtros
-        $params = self::validate_parameters(self::create_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::create_group_parameters(), array('group' => $group));
 
         // Transforma o array em objeto.
         $group = (object)$group;
@@ -37,61 +37,63 @@ class local_wsintegracao_group extends wsintegracao_base{
         //verifica se o grupo pode ser criado e recebe o id do course do group
         $courseid = self::get_create_group_validation_rules($group);
 
-
+        $returndata = null;
 
         try{
-        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-        $transaction = $DB->start_delegated_transaction();
-        //prepara o array para salvar os dados no moodle
-        $groupdata['courseid'] = $courseid;
-        $groupdata['name'] = $group->name;
-        $groupdata['description'] = $group->description;
-        $groupdata['descriptionformat'] = 1;
-        $groupdata['timecreated'] = time();
-        $groupdata['timemodified'] = $groupdata['timecreated'];
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-        $resultid = $DB->insert_record('groups', $groupdata);
+            //prepara o array para salvar os dados no moodle
+            $groupdata['courseid'] = $courseid;
+            $groupdata['name'] = $group->name;
+            $groupdata['description'] = $group->description;
+            $groupdata['descriptionformat'] = 1;
+            $groupdata['timecreated'] = time();
+            $groupdata['timemodified'] = $groupdata['timecreated'];
 
-        // Caso o curso tenha sido criado adiciona na tabela de controle os dados do curso e da turma.
-        if($resultid) {
-            $data['trm_id'] = $group->trm_id;
-            $data['grp_id'] = $group->grp_id;
-            $data['groupid'] = $resultid;
+            $resultid = $DB->insert_record('groups', $groupdata);
 
-            $res = $DB->insert_record('int_grupo_group', $data);
+            // Caso o curso tenha sido criado adiciona na tabela de controle os dados do curso e da turma.
+            if($resultid) {
 
-            // Busca as configuracoes do curso
-            $courseoptions = $DB->get_record('course', array('id'=>$courseid), '*');
+                $data['trm_id'] = $group->trm_id;
+                $data['grp_id'] = $group->grp_id;
+                $data['groupid'] = $resultid;
 
-            // Altera o formato de grupos do curso
-            $courseoptions->groupmode = 1;
-            $courseoptions->groupmodeforce = 1;
-            $DB->update_record('course', $courseoptions);
+                $res = $DB->insert_record('int_grupo_group', $data);
 
-            // Invalidate the grouping cache for the course
-            cache_helper::invalidate_by_definition('core', 'groupdata', array(), array($courseid));
+                // Busca as configuracoes do curso
+                $courseoptions = $DB->get_record('course', array('id'=>$courseid), '*');
 
-            // Prepara o array de retorno.
-            $returndata = null;
-            if($res) {
-                $returndata['id'] = $resultid;
-                $returndata['status'] = 'success';
-                $returndata['message'] = 'Grupo criado com sucesso';
-            } else {
-                $returndata['id'] = 0;
-                $returndata['status'] = 'error';
-                $returndata['message'] = 'Erro ao tentar criar o grupo';
+                // Altera o formato de grupos do curso
+                $courseoptions->groupmode = 1;
+                $courseoptions->groupmodeforce = 1;
+                $DB->update_record('course', $courseoptions);
+
+                // Invalidate the grouping cache for the course
+                cache_helper::invalidate_by_definition('core', 'groupdata', array(), array($courseid));
+
+                // Prepara o array de retorno.
+                if($res) {
+                    $returndata['id'] = $resultid;
+                    $returndata['status'] = 'success';
+                    $returndata['message'] = 'Grupo criado com sucesso';
+                } else {
+                    $returndata['id'] = 0;
+                    $returndata['status'] = 'error';
+                    $returndata['message'] = 'Erro ao tentar criar o grupo';
+                }
             }
-        }
 
-        // Persiste as operacoes em caso de sucesso.
-        $transaction->allow_commit();
-      }catch(Exception $e) {
-          $transaction->rollback($e);
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+        }catch(Exception $e) {
+            $transaction->rollback($e);
         }
 
         return $returndata;
     }
+
     public static function create_group_parameters() {
         return new external_function_parameters(
             array(
@@ -106,6 +108,7 @@ class local_wsintegracao_group extends wsintegracao_base{
             )
         );
     }
+
     public static function create_group_returns() {
         return new external_single_structure(
             array(
@@ -120,7 +123,7 @@ class local_wsintegracao_group extends wsintegracao_base{
         global $CFG, $DB;
 
         // Valida os parametros.
-        $params = self::validate_parameters(self::update_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::update_group_parameters(), array('group' => $group));
 
         // Transforma o array em objeto.
         $group = (object)$group;
@@ -143,7 +146,7 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         }catch(Exception $e) {
             $transaction->rollback($e);
-          }
+        }
 
         // Prepara o array de retorno.
         $returndata['id'] = $groupid;
@@ -152,6 +155,7 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         return $returndata;
     }
+
     public static function update_group_parameters() {
         return new external_function_parameters(
             array(
@@ -164,6 +168,7 @@ class local_wsintegracao_group extends wsintegracao_base{
             )
         );
     }
+
     public static function update_group_returns() {
         return new external_single_structure(
             array(
@@ -173,11 +178,12 @@ class local_wsintegracao_group extends wsintegracao_base{
             )
         );
     }
+
     public static function remove_group($group) {
         global $CFG, $DB;
 
         // Valida os parametros.
-        $params = self::validate_parameters(self::remove_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::remove_group_parameters(), array('group' => $group));
 
         // Inlcui a biblioteca de grupos do moodle
         require_once("{$CFG->dirroot}/group/lib.php");
@@ -204,13 +210,13 @@ class local_wsintegracao_group extends wsintegracao_base{
           //deleta os registros da tabela de controle
           $DB->delete_records('int_grupo_group', array('groupid'=>$groupid));
 
-
           // Persiste as operacoes em caso de sucesso.
           $transaction->allow_commit();
 
         }catch(Exception $e) {
             $transaction->rollback($e);
-          }
+        }
+
         // Prepara o array de retorno.
         $returndata['id'] = $groupid;
         $returndata['status'] = 'success';
@@ -219,6 +225,7 @@ class local_wsintegracao_group extends wsintegracao_base{
         return $returndata;
 
     }
+
     public static function remove_group_parameters() {
         return new external_function_parameters(
             array(
@@ -230,6 +237,7 @@ class local_wsintegracao_group extends wsintegracao_base{
             )
         );
     }
+
     public static function remove_group_returns() {
         return new external_single_structure(
             array(
@@ -251,6 +259,7 @@ class local_wsintegracao_group extends wsintegracao_base{
     protected static function get_create_group_validation_rules($group)
     {
         $groupid = self::get_group_by_grp_id($group->grp_id);
+
         // Dispara uma excessao caso ja exista um grupo com esse grp_id
         if($groupid) {
           throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
@@ -258,12 +267,14 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         // Busca o id do curso apartir do trm_id da turma.
         $courseid = self::get_course_by_trm_id($group->trm_id);
+
         // Se nao existir curso mapeado para a turma dispara uma excessao.
         if(!$courseid) {
             throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
         }
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
+
         // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
         if($groupbyname) {
             throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
@@ -275,6 +286,7 @@ class local_wsintegracao_group extends wsintegracao_base{
     protected static function get_update_group_validation_rules($group)
     {
         $groupid = self::get_group_by_grp_id($group->grp_id);
+
         // Dispara uma excessao caso não exista um grupo com esse grp_id
         if(!$groupid) {
           throw new Exception("Não existe nenhum grupo mapeado com o moodle com grp_id: " . $group->grp_id);
@@ -284,6 +296,7 @@ class local_wsintegracao_group extends wsintegracao_base{
         $courseid = self::get_courseid_by_groupid($groupid);
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
+
         // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
         if($groupbyname) {
             throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
