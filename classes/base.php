@@ -174,14 +174,33 @@ class wsintegracao_base extends external_api
         global $CFG, $DB;
 
         // Inlcui a biblioteca do moodle para poder enviar o email
-        require_once("{$CFG->dirroot}/lib/moodlelib.php");
+        require_once("{$CFG->wwwroot}/lib/moodlelib.php");
 
         $user = $DB->get_record('user', array('id' => $userId));
 
-        $subject = "Assunto";
-        $messagetext = "Corpo de texto";
+        $subject = "Instruções de acesso";
 
-        email_to_user($user, '', $subject, $messagetext, '','','',false);
+        $messagehtml = "Prezado usuário,<br><br>
+
+                        Para nós é um enorme prazer tê-lo(a) em um dos nossos cursos de Educação a Distância.<br>
+
+                        Você já possui cadastro no AVA, no entanto, deverá seguir as instruções abaixo para acessá-lo:<br>
+                        Instruções para acesso ao AVA<br><br>
+                        - Acesse o endereço: {$CFG->dirroot}<br>
+                        - na caixa de texto \'Usuário\', digite: ".$user->username."<br>
+                        - na caixa de texto \'Senha\', digite: ".$senha."<br>
+                        - clique no botão \'Acessar\'<br>
+                        - uma nova página com três caixas de texto será exibida.<br>
+                        - na caixa de texto \'Senha Atual\', digite: changeme<br>
+                        - na caixa de texto \'Nova senha\', digite uma nova senha para ser utilizada nos seus próximos acessos<br>
+                        - na caixa de texto \'Nova senha (novamente)\', digite novamente a sua nova senha de acesso<br>
+                        - clique no botão \'Salvar mudanças\'<br>
+                        - uma nova página com o texto \'A senha foi alterada\' será exibida.<br>
+                        - clique em \'Continuar\'<br><br>
+
+                        Obs: Esse é apenas um e-mail informativo. Não responda este e-mail.<br>";
+
+        email_to_user($user, '', $subject, '', $messagehtml,'','',false);
 
         return true;
     }
