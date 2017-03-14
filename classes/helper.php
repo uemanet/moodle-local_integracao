@@ -12,12 +12,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Miidle Web Service - helper manager
+ * Integracao Web Service - helper manager
  *
  * @package    contrib
  * @subpackage local_integracao
- * @copyright  2016 Willian Mano http://willianmano.github.io
- * @authors    Willian Mano
+ * @copyright  2017 UemaNet
+ * @authors    UemaNet
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
