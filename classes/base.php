@@ -101,6 +101,8 @@ class wsintegracao_base extends external_api
         $user->mnethostid = 1;
         $userid = user_create_user($user);
 
+        $userid = self::send_instructions_email($userid, $user->password);
+
         return $userid;
     }
 
@@ -165,6 +167,23 @@ class wsintegracao_base extends external_api
         $params['courseid'] = $courseId;
 
         return current($DB->get_records_sql($sql, $params));
+    }
+
+    protected static function send_instructions_email($userId, $senha)
+    {
+        global $CFG, $DB;
+
+        // Inlcui a biblioteca do moodle para poder enviar o email
+        require_once("{$CFG->dirroot}/lib/moodlelib.php");
+
+        $user = $DB->get_record('user', array('id' => $userId));
+
+        $subject = "Assunto";
+        $messagetext = "Corpo de texto";
+
+        email_to_user($user, '', $subject, $messagetext, '','','',false);
+
+        return true;
     }
 
 }
