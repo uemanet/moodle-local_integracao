@@ -89,20 +89,6 @@ class wsintegracao_base extends external_api
         }
     }
 
-    protected static function save_user($user)
-    {
-        global $CFG, $DB;
-
-        // Inclui a biblioteca de usuários do moodle
-        require_once("{$CFG->dirroot}/user/lib.php");
-
-        // Cria o usuario usando a biblioteca do proprio moodle.
-        $user->confirmed = 1;
-        $user->mnethostid = 1;
-        $userid = user_create_user($user);
-
-        return $userid;
-    }
 
     protected static function get_course_enrol($courseid)
     {
@@ -167,4 +153,67 @@ class wsintegracao_base extends external_api
         return current($DB->get_records_sql($sql, $params));
     }
 
+    protected static function send_instructions_email($userId, $senha)
+    {
+        global $CFG, $DB;
+
+        // Inlcui a biblioteca do moodle para poder enviar o email
+        require_once("{$CFG->dirroot}/lib/moodlelib.php");
+
+        $user = $DB->get_record('user', array('id' => $userId));
+
+        $subject = "Instruções de acesso";
+
+        $messagehtml = '<p style = "line-height:21px;font-size:20px;margin-top:20px;margin-bottom:0px">Prezado usuário,<br><br>
+
+                        Para nós é um enorme prazer tê-lo(a) em um dos nossos cursos de Educação a Distância.<br>
+
+                        Você já possui cadastro no AVA, no entanto, deverá seguir as instruções abaixo para acessá-lo:</p><br>
+
+                        <p style = "line-height:28px;font-size:20px;margin-top:20px;margin-bottom:0px;text-align:center">
+                          <strong style = "line-height:inherit">Instruções para acesso ao AVA</strong>
+                        </p>
+                        <br><br>
+                        <blockquote style = "line-height:inherit;margin:20px 0px 0px;padding-left:14px;border-left:4px solid rgb(189,189,189)">
+                          <p style = "line-height:21px;font-size:14px;margin-top:20px;margin-bottom:20px">
+                          - Acesse o endereço: '.$CFG->wwwroot.'<br>
+                          - na caixa de texto "Usuário", digite: '.$user->username.'<br>
+                          - na caixa de texto "Senha", digite: changeme <br>
+                          - clique no botão "Acessar"<br>
+                          - uma nova página com três caixas de texto será exibida.<br>
+                          - na caixa de texto "Senha Atual", digite: changeme<br>
+                          - na caixa de texto "Nova senha", digite uma nova senha para ser utilizada nos seus próximos acessos<br>
+                          - na caixa de texto "Nova senha (novamente)", digite novamente a sua nova senha de acesso<br>
+                          - clique no botão "Salvar mudanças"<br>
+                          - uma nova página com o texto "A senha foi alterada" será exibida.<br>
+                          - clique em "Continuar"
+                          </p>
+                        </blockquote>
+                        <br><br>
+
+                        Seja Bem Vindo(a)!<br>
+
+                        <b>Obs: Esse é apenas um e-mail informativo. Não responda este e-mail.</b><br>';
+
+        email_to_user($user, '', $subject, '', $messagehtml,'','',false);
+
+
+    }
+
+    protected static function save_user($user)
+    {
+      global $CFG, $DB;
+
+      // Inclui a biblioteca de usuários do moodle
+      require_once("{$CFG->dirroot}/user/lib.php");
+
+      // Cria o usuario usando a biblioteca do proprio moodle.
+      $user->confirmed = 1;
+      $user->mnethostid = 1;
+      $userid = user_create_user($user);
+
+      self::send_instructions_email($userid, $user->password);
+
+      return $userid;
+    }
 }

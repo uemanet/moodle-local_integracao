@@ -94,4 +94,5 @@ class local_wsintegracao_user extends wsintegracao_base{
             )
         );
     }
+
 }
