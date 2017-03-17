@@ -306,12 +306,15 @@ class local_wsintegracao_student extends wsintegracao_base{
             throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$student->pes_id);
         }
 
-        //verifica se o grupo enviado pelo harpia, existe no moodle
-        $oldGroupId = self::get_group_by_grp_id($student->old_grp_id);
+        $oldGroupId = null;
+        if($student->old_grp_id){
+            //verifica se o grupo enviado pelo harpia, existe no moodle
+            $oldGroupId = self::get_group_by_grp_id($student->old_grp_id);
 
-        // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
-        if(!$oldGroupId) {
-            throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->old_grp_id);
+            // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle
+            if(!$oldGroupId) {
+                throw new Exception("Não existe um grupo mapeado com o moodle com grp_id:" .$student->old_grp_id);
+            }
         }
 
         //Verifica se o aluno está realmente vinculado a esse grupo enviado pelo harpia
@@ -337,8 +340,10 @@ class local_wsintegracao_student extends wsintegracao_base{
             //adiciona a bibliteca de grupos do moodle
             require_once("{$CFG->dirroot}/group/lib.php");
 
-            //chama a função para remover o membro do antigo grupo
-            groups_remove_member($oldGroupId, $userId);
+            if($oldGroupId){
+                //chama a função para remover o membro do antigo grupo
+                groups_remove_member($oldGroupId, $userId);
+            }
 
             //chama a função para adicionar o membro no novo grupo
             groups_add_member($newGroupId, $userId);
@@ -358,7 +363,7 @@ class local_wsintegracao_student extends wsintegracao_base{
         // Prepara o array de retorno.
         $returndata['id'] = $userId;
         $returndata['status'] = 'success';
-        $returndata['message'] = 'Aluno desvinculado do grupo com sucesso';
+        $returndata['message'] = 'Aluno trocado de grupo com sucesso';
 
         return $returndata;
     }
@@ -370,7 +375,7 @@ class local_wsintegracao_student extends wsintegracao_base{
                     array(
                         'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
                         'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'old_grp_id' => new external_value(PARAM_INT, 'Id do antigo grupo no gestor'),
+                        'old_grp_id' => new external_value(PARAM_INT, 'Id do antigo grupo no gestor', VALUE_DEFAULT, null),
                         'new_grp_id' => new external_value(PARAM_INT, 'Id do novo grupo no gestor')
                     )
                 )

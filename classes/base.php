@@ -178,10 +178,10 @@ class wsintegracao_base extends external_api
                           <p style = "line-height:21px;font-size:14px;margin-top:20px;margin-bottom:20px">
                           - Acesse o endereço: '.$CFG->wwwroot.'<br>
                           - na caixa de texto "Usuário", digite: '.$user->username.'<br>
-                          - na caixa de texto "Senha", digite: changeme <br>
+                          - na caixa de texto "Senha", digite: <b>changeme</b> <br>
                           - clique no botão "Acessar"<br>
                           - uma nova página com três caixas de texto será exibida.<br>
-                          - na caixa de texto "Senha Atual", digite: changeme<br>
+                          - na caixa de texto "Senha Atual", digite: <b>changeme</b><br>
                           - na caixa de texto "Nova senha", digite uma nova senha para ser utilizada nos seus próximos acessos<br>
                           - na caixa de texto "Nova senha (novamente)", digite novamente a sua nova senha de acesso<br>
                           - clique no botão "Salvar mudanças"<br>
@@ -191,7 +191,7 @@ class wsintegracao_base extends external_api
                         </blockquote>
                         <br><br>
 
-                        Seja Bem Vindo(a)!<br>
+                        Seja Bem Vindo(a)!<br><br>
 
                         <b>Obs: Esse é apenas um e-mail informativo. Não responda este e-mail.</b><br>';
 
