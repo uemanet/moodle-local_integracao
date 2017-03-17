@@ -140,7 +140,10 @@ class local_wsintegracao_group extends wsintegracao_base{
           // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
           $transaction = $DB->start_delegated_transaction();
 
-          $DB->update_record('groups', $groupObj);
+          // Inlcui a biblioteca de grupos do moodle
+          require_once("{$CFG->dirroot}/group/lib.php");
+
+          groups_update_group($groupObj);
 
           $transaction->allow_commit();
 
