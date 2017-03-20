@@ -135,13 +135,7 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-    'local_integracao_send_email' => array(
-        'classname' => 'local_wsintegracao_user',
-        'methodname' => 'send_email',
-        'classpath' => 'local/integracao/classes/user.php',
-        'description' => 'send a email',
-        'type' => 'write'
-    ),
+
     'ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
@@ -170,7 +164,6 @@ $services = array(
             'local_integracao_enrol_student_discipline',
             'local_integracao_delete_discipline',
             'local_integracao_update_user',
-            'local_integracao_send_email',
             'ping'
         ),
         'restrictedusers' => 0,
