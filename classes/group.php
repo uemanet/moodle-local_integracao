@@ -197,7 +197,7 @@ class local_wsintegracao_group extends wsintegracao_base{
         // Busca o id do curso apartir do trm_id da turma.
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
-        // Se nao existir curso mapeado para a turma dispara uma excessao.
+        // Se nao existir curso mapeado para a turma dispara uma exceção.
         if(!$groupid) {
           throw new Exception("Nenhum group mapeado com o grupo com grp_id: " . $group->grp_id);
         }
@@ -263,7 +263,7 @@ class local_wsintegracao_group extends wsintegracao_base{
     {
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
-        // Dispara uma excessao caso ja exista um grupo com esse grp_id
+        // Dispara uma exceção caso ja exista um grupo com esse grp_id
         if($groupid) {
           throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
         }
@@ -271,14 +271,14 @@ class local_wsintegracao_group extends wsintegracao_base{
         // Busca o id do curso apartir do trm_id da turma.
         $courseid = self::get_course_by_trm_id($group->trm_id);
 
-        // Se nao existir curso mapeado para a turma dispara uma excessao.
+        // Se nao existir curso mapeado para a turma dispara uma exceção.
         if(!$courseid) {
             throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
         }
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
 
-        // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
+        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso
         if($groupbyname) {
             throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
         }
@@ -290,7 +290,7 @@ class local_wsintegracao_group extends wsintegracao_base{
     {
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
-        // Dispara uma excessao caso não exista um grupo com esse grp_id
+        // Dispara uma exceção caso não exista um grupo com esse grp_id
         if(!$groupid) {
           throw new Exception("Não existe nenhum grupo mapeado com o moodle com grp_id: " . $group->grp_id);
         }
@@ -300,7 +300,7 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
 
-        // Dispara uma excessao caso ja exista um grupo com o mesmo nome no mesmo curso
+        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso
         if($groupbyname) {
             throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
         }

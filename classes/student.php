@@ -169,6 +169,12 @@ class local_wsintegracao_student extends wsintegracao_base{
                 $roleid = $config->aluno_concluido;
             } else if ($student->new_status == 'reprovado') {
                 $roleid = $config->aluno_reprovado;
+            } else if ($student->new_status == 'cursando') {
+                $roleid = $config->aluno;
+            } else if ($student->new_status == 'evadido') {
+                $roleid = $config->aluno_evadido;
+            } else if ($student->new_status == 'desistente') {
+                $roleid = $config->aluno_desistente;
             } else if ($student->new_status == 'trancado') {
                 $roleid = $config->aluno_trancado;
             }

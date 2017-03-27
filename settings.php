@@ -75,6 +75,16 @@ if ( $hassiteconfig ){
     );
 
     $settings->add(
+        new admin_setting_configselect('local_integracao/aluno_evadido', 'Aluno Evadido',
+            '', '1', $papeis)
+    );
+
+    $settings->add(
+        new admin_setting_configselect('local_integracao/aluno_desistente', 'Aluno Desistente',
+            '', '1', $papeis)
+    );
+
+    $settings->add(
         new admin_setting_configselect('local_integracao/professor', 'Professor',
             '', '1', $papeis)
     );
