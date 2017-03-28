@@ -252,14 +252,6 @@ class local_wsintegracao_discipline extends wsintegracao_base
             throw new Exception('Não existe uma section mapeada para essa disciplina oferecida. ofd_id: '.$discipline->ofd_id);
         }
 
-        // Busca o id do curso a partir do id da turma
-        $courseId = self::get_course_by_trm_id($discipline->trm_id);
-
-        // Dispara uma exceção caso essa turma não esteja mapeada para um curso
-        if(!$courseId) {
-            throw new Exception('Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: '.$discipline->trm_id);
-        }
-
         try {
             // Inicia a transação, qualquer erro que aconteça o rollback será executado
             $transaction = $DB->start_delegated_transaction();
@@ -267,8 +259,11 @@ class local_wsintegracao_discipline extends wsintegracao_base
             //adiciona a biblioteca de cursos do moodle
             require_once("{$CFG->dirroot}/course/lib.php");
 
-            // Deleta a section do moodle
+            // Busca a section no moodle
             $section = $DB->get_record('course_sections', array( 'id' => $sectionId->sectionid ));
+
+            // Recebe o Id do curso do lado do Moodle
+            $courseId = $section->course;
 
             //busca o curso da disciplina no moodle
             $course = $DB->get_record('course', array( 'id' => $courseId ));
@@ -323,7 +318,6 @@ class local_wsintegracao_discipline extends wsintegracao_base
             array(
                 'discipline' => new external_single_structure(
                     array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
                         'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor')
                     )
                 )
