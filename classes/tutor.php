@@ -47,8 +47,14 @@ class local_wsintegracao_tutor extends wsintegracao_base{
             $courseid = self::get_courseid_by_groupid($data['groupid']);
 
             //vincula o tutor a um curso no moodle
-            $tutor_role = get_config('local_integracao')->tutor_distancia;
-            self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutor_role);
+            $tutor_presencial_role = get_config('local_integracao')->tutor_presencial;
+            $tutor_distancia_role = get_config('local_integracao')->tutor_distancia;
+            
+            if($tutor->ttg_tipo_tutoria == "presencial"){
+              self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutor_presencial_role);
+            }else{
+              self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutor_distancia_role);
+            }
 
             //adiciona a bibliteca de grupos do moodle
             require_once("{$CFG->dirroot}/group/lib.php");
