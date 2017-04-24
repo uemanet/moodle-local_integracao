@@ -136,7 +136,7 @@ $functions = array(
         'type' => 'write'
     ),
 
-    'ping' => array(
+    'integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
@@ -164,7 +164,7 @@ $services = array(
             'local_integracao_enrol_student_discipline',
             'local_integracao_delete_discipline',
             'local_integracao_update_user',
-            'ping'
+            'integracao_ping'
         ),
         'restrictedusers' => 0,
         'enabled' => 1
