@@ -128,6 +128,13 @@ $functions = array(
         'description' => 'Delete a discipline',
         'type' => 'write'
     ),
+    'local_integracao_get_grades_batch' => array(
+        'classname' => 'local_wsintegracao_grade',
+        'methodname' => 'get_grades_batch',
+        'classpath' => 'local/integracao/classes/grade.php',
+        'description' => 'Return final grade of a list of students',
+        'type' => 'read'
+    ),
     'local_integracao_update_user' => array(
         'classname' => 'local_wsintegracao_user',
         'methodname' => 'update_user',
@@ -135,7 +142,6 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-
     'integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
@@ -163,6 +169,7 @@ $services = array(
             'local_integracao_create_discipline',
             'local_integracao_enrol_student_discipline',
             'local_integracao_delete_discipline',
+            'local_integracao_get_grades_batch',
             'local_integracao_update_user',
             'integracao_ping'
         ),
