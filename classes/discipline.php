@@ -60,14 +60,6 @@ class local_wsintegracao_discipline extends wsintegracao_base
 
             $section['id'] = $DB->insert_record('course_sections', $section);
 
-            // Busca as configuracoes do formato do curso
-            $courseFormatOptions = $DB->get_record('course_format_options', array('courseid'=>$courseId, 'name' => 'numsections'), '*');
-
-            // Atualiza o total de sections do curso
-            $courseFormatOptions->value = $lastSection + 1;
-
-            $DB->update_record('course_format_options', $courseFormatOptions);
-
             //verifica se existe um usuário no moodle com esse Id no lado do harpia
             $userId = self::get_user_by_pes_id($discipline->pes_id);
 
