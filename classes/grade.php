@@ -31,18 +31,20 @@ class local_wsintegracao_grade extends wsintegracao_base
         $itens = json_decode($grades['itens'], true);
 
         if (empty($itens)) {
-            throw new Exception('Paramêtro itens está vazio.');
+            throw new Exception('Parâmetro itens está vazio.');
         }
 
         $itens_notas = [];
         foreach ($itens as $item) {
-            $nota = self::get_grade_by_itemid($item, $userid);
+            $nota = self::get_grade_by_itemid($item['id'], $userid);
 
-            if (!$nota) {
-                throw new Exception('Item de nota com id: '.$item.' não existe.');
+            if ($nota) {
+                $itens_notas[] = [
+                    'id' => $item['id'],
+                    'tipo' => $item['tipo'],
+                    'nota' => $nota
+                ];
             }
-
-            $itens_notas[$item] = $nota;
         }
 
         $retorno = [
