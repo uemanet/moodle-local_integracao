@@ -216,4 +216,26 @@ class wsintegracao_base extends external_api
 
       return $userid;
     }
+
+    protected static function verify_teacher_enroled_course_section($teacherId, $sectionId)
+    {
+      global $CFG, $DB;
+      // Inclui a biblioteca de usuários do moodle
+      require_once("{$CFG->dirroot}/user/lib.php");
+      $section = $DB->get_record('course_sections', array('id'=>$sectionId), '*');
+
+      $result = $DB->get_records('int_discipline_section', array('pes_id'=>$teacherId));
+
+      if(!empty($result)){
+        foreach ($result as $key => $value) {
+          $is_enroled = $DB->get_record('course_sections', array('id'=>$value->sectionid, 'course' => $section->course), '*');
+          if ($is_enroled) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+
+    }
 }
