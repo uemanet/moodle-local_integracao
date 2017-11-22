@@ -135,6 +135,13 @@ $functions = array(
         'description' => 'Return final grade of a list of students',
         'type' => 'read'
     ),
+    'local_integracao_change_teacher' => array(
+        'classname' => 'local_wsintegracao_professor',
+        'methodname' => 'change_teacher',
+        'classpath' => 'local/integracao/classes/professor.php',
+        'description' => 'Changes the teacher of a discipline',
+        'type' => 'write'
+    ),
     'local_integracao_update_user' => array(
         'classname' => 'local_wsintegracao_user',
         'methodname' => 'update_user',
@@ -170,6 +177,7 @@ $services = array(
             'local_integracao_enrol_student_discipline',
             'local_integracao_delete_discipline',
             'local_integracao_get_grades_batch',
+            'local_integracao_change_teacher',
             'local_integracao_update_user',
             'integracao_ping'
         ),
