@@ -1,61 +1,68 @@
 <?php
-// This file is part of wsintegracao plugin for Moodle.
+// This file is part of Moodle - http://moodle.org/
 //
-// wsintegracao is free software: you can redistribute it and/or modify
+// Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// wsintegracao is distributed in the hope that it will be useful,
+// Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with wsintegracao.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Class local_wsintegracao_course
- * @copyright   2017 Uemanet
- * @author      Uemanet
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+defined('MOODLE_INTERNAL') || die();
 
 require_once("base.php");
 
-class local_wsintegracao_user extends wsintegracao_base{
+/**
+ * @package integracao
+ * @copyright 2018 Uemanet
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class local_wsintegracao_user extends wsintegracao_base {
 
-    public static function update_user($user)
-    {
+    /**
+     * @param $user
+     * @return mixed
+     * @throws Exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     */
+    public static function update_user($user) {
         global $CFG, $DB;
 
-        // Validação dos paramêtros
+        // Validação dos paramêtros.
         self::validate_parameters(self::update_user_parameters(), array('user' => $user));
 
-        //verifica se o o usuário enviado pelo harpia, existe no moodle
+        // Verifica se o o usuário enviado pelo harpia, existe no moodle.
         $user['id'] = self::get_user_by_pes_id($user['pes_id']);
 
-        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle
-        if(!$user['id']) {
-          throw new Exception("Não existe um usuário mapeado com o moodle com pes_id:" .$user['pes_id']);
+        // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
+        if (!$user['id']) {
+            throw new \Exception("Não existe um usuário mapeado com o moodle com pes_id:" . $user['pes_id']);
         }
 
         // Transforma o array em objeto.
         $user = (object)$user;
 
-        try{
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+        try {
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Inclui a biblioteca de usuários do moodle
-          require_once("{$CFG->dirroot}/user/lib.php");
-          user_update_user($user, false);
+            // Inclui a biblioteca de usuários do moodle.
+            require_once("{$CFG->dirroot}/user/lib.php");
+            user_update_user($user, false);
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
 
         } catch (Exception $e) {
-          $transaction->rollback($e);
+            $transaction->rollback($e);
         }
 
         // Prepara o array de retorno.
@@ -66,8 +73,11 @@ class local_wsintegracao_user extends wsintegracao_base{
         return $returndata;
     }
 
-    public static function update_user_parameters()
-    {
+    /**
+     * Update user params
+     * @return external_function_parameters
+     */
+    public static function update_user_parameters() {
         return new external_function_parameters(
             array(
                 'user' => new external_single_structure(
@@ -84,8 +94,11 @@ class local_wsintegracao_user extends wsintegracao_base{
         );
     }
 
-    public static function update_user_returns()
-    {
+    /**
+     * Update user return structure
+     * @return external_single_structure
+     */
+    public static function update_user_returns() {
         return new external_single_structure(
             array(
                 'id' => new external_value(PARAM_INT, 'Id'),
