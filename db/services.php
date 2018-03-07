@@ -150,7 +150,7 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-    'integracao_ping' => array(
+    'local_integracao_integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
@@ -180,7 +180,7 @@ $services = array(
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
             'local_integracao_update_user',
-            'integracao_ping'
+            'local_integracao_integracao_ping'
         ),
         'restrictedusers' => 0,
         'enabled' => 1

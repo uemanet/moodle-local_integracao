@@ -32,7 +32,7 @@ class wsintegracao_base extends external_api {
      * @throws moodle_exception
      */
     protected static function get_course_by_trm_id($trmid) {
-        global $DB;
+        global $DB, $CFG;
 
         try {
             $courseid = 0;
@@ -46,7 +46,7 @@ class wsintegracao_base extends external_api {
             return $courseid;
 
         } catch (\Exception $e) {
-            if (helper::debug()) {
+            if ($CFG->debug == DEBUG_DEVELOPER) {
                 throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
             }
         }
@@ -58,7 +58,7 @@ class wsintegracao_base extends external_api {
      * @throws moodle_exception
      */
     protected static function get_user_by_pes_id($pesid) {
-        global $DB;
+        global $DB, $CFG;
 
         try {
             $userid = null;
@@ -71,7 +71,7 @@ class wsintegracao_base extends external_api {
 
             return $userid;
         } catch (\Exception $e) {
-            if (helper::debug()) {
+            if ($CFG->debug == DEBUG_DEVELOPER) {
                 throw new moodle_exception('databaseaccesserror', 'local_integracao', null, null, '');
             }
         }
@@ -83,7 +83,7 @@ class wsintegracao_base extends external_api {
      * @throws moodle_exception
      */
     protected static function get_group_by_grp_id($grpid) {
-        global $DB;
+        global $DB, $CFG;
 
         try {
             $groupid = 0;
@@ -97,7 +97,7 @@ class wsintegracao_base extends external_api {
             return $groupid;
 
         } catch (\Exception $e) {
-            if (helper::debug()) {
+            if ($CFG->debug == DEBUG_DEVELOPER) {
                 throw new moodle_exception('databaseaccesserror', 'local_wsintegracao', null, null, '');
             }
         }
