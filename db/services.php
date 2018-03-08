@@ -150,7 +150,7 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-    'local_integracao_integracao_ping' => array(
+    'local_integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
