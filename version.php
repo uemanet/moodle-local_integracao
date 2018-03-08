@@ -22,7 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version = 2018030800;
+$plugin->version = 2018030801;
 $plugin->requires = 2013062000;
 $plugin->release = '0.1.1';
 $plugin->maturity = MATURITY_STABLE;

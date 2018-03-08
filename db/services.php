@@ -180,7 +180,7 @@ $services = array(
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
             'local_integracao_update_user',
-            'local_integracao_integracao_ping'
+            'local_integracao_ping'
         ),
         'restrictedusers' => 0,
         'enabled' => 1
