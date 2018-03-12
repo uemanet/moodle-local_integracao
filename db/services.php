@@ -1,27 +1,28 @@
 <?php
-// This file is part of wstutor plugin for Moodle.
+// This file is part of Moodle - http://moodle.org/
 //
-// wstutor is free software: you can redistribute it and/or modify
+// Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// wstutor is distributed in the hope that it will be useful,
+// Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with wstutor.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
+defined('MOODLE_INTERNAL') || die();
+
+/*
  * Web Service local plugin functions and services definition
- * @package     db
- * @copyright   2017 Uemanet
- * @author      Uemanet
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @package integracao
+ * @copyright 2018 Uemanet
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 $functions = array(
     'local_integracao_create_course' => array(
         'classname' => 'local_wsintegracao_course',
@@ -149,7 +150,7 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
-    'integracao_ping' => array(
+    'local_integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
@@ -179,7 +180,7 @@ $services = array(
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
             'local_integracao_update_user',
-            'integracao_ping'
+            'local_integracao_ping'
         ),
         'restrictedusers' => 0,
         'enabled' => 1

@@ -1,18 +1,22 @@
 <?php
-// This file is part of wsintegracao plugin for Moodle.
+// This file is part of Moodle - http://moodle.org/
 //
-// wsintegracao is free software: you can redistribute it and/or modify
+// Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// wsintegracao is distributed in the hope that it will be useful,
+// Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with wsintegracao.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once('base.php');
 
 /**
  * Class local_wsintegracao_course
@@ -20,30 +24,27 @@
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once("base.php");
-
-class local_wsintegracao_group extends wsintegracao_base{
+class local_wsintegracao_group extends wsintegracao_base {
 
     public static function create_group($group) {
         global $CFG, $DB;
 
-        // Validação dos paramêtros
+        // Validação dos paramêtros.
         self::validate_parameters(self::create_group_parameters(), array('group' => $group));
 
         // Transforma o array em objeto.
         $group = (object)$group;
 
-        //verifica se o grupo pode ser criado e recebe o id do course do group
+        // Verifica se o grupo pode ser criado e recebe o id do course do group.
         $courseid = self::get_create_group_validation_rules($group);
 
         $returndata = null;
 
-        try{
+        try {
             // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
             $transaction = $DB->start_delegated_transaction();
 
-            //prepara o array para salvar os dados no moodle
+            // Prepara o array para salvar os dados no moodle.
             $groupdata['courseid'] = $courseid;
             $groupdata['name'] = $group->name;
             $groupdata['description'] = $group->description;
@@ -54,27 +55,26 @@ class local_wsintegracao_group extends wsintegracao_base{
             $resultid = $DB->insert_record('groups', $groupdata);
 
             // Caso o curso tenha sido criado adiciona na tabela de controle os dados do curso e da turma.
-            if($resultid) {
-
+            if ($resultid) {
                 $data['trm_id'] = $group->trm_id;
                 $data['grp_id'] = $group->grp_id;
                 $data['groupid'] = $resultid;
 
                 $res = $DB->insert_record('int_grupo_group', $data);
 
-                // Busca as configuracoes do curso
-                $courseoptions = $DB->get_record('course', array('id'=>$courseid), '*');
+                // Busca as configuracoes do curso.
+                $courseoptions = $DB->get_record('course', array('id' => $courseid), '*');
 
-                // Altera o formato de grupos do curso
+                // Altera o formato de grupos do curso.
                 $courseoptions->groupmode = 1;
                 $courseoptions->groupmodeforce = 1;
                 $DB->update_record('course', $courseoptions);
 
-                // Invalidate the grouping cache for the course
+                // Invalidate the grouping cache for the course.
                 cache_helper::invalidate_by_definition('core', 'groupdata', array(), array($courseid));
 
                 // Prepara o array de retorno.
-                if($res) {
+                if ($res) {
                     $returndata['id'] = $resultid;
                     $returndata['status'] = 'success';
                     $returndata['message'] = 'Grupo criado com sucesso';
@@ -87,13 +87,16 @@ class local_wsintegracao_group extends wsintegracao_base{
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             $transaction->rollback($e);
         }
 
         return $returndata;
     }
 
+    /**
+     * @return external_function_parameters
+     */
     public static function create_group_parameters() {
         return new external_function_parameters(
             array(
@@ -109,6 +112,9 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function create_group_returns() {
         return new external_single_structure(
             array(
@@ -119,6 +125,14 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @param $group
+     * @return mixed
+     * @throws Exception
+     * @throws dml_exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     */
     public static function update_group($group) {
         global $CFG, $DB;
 
@@ -128,26 +142,26 @@ class local_wsintegracao_group extends wsintegracao_base{
         // Transforma o array em objeto.
         $group = (object)$group;
 
-        //verifica se o grupo pode ser criado e recebe o id do course do group
+        // Verifica se o grupo pode ser criado e recebe o id do course do group.
         $groupid = self::get_update_group_validation_rules($group);
 
-        $groupObj = $DB->get_record('groups', array('id' => $groupid), '*');
+        $groupobject = $DB->get_record('groups', array('id' => $groupid), '*');
 
-        $groupObj->name = $group->grp_nome;
+        $groupobject->name = $group->grp_nome;
 
-        try{
+        try {
 
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Inlcui a biblioteca de grupos do moodle
-          require_once("{$CFG->dirroot}/group/lib.php");
+            // Inclui a biblioteca de grupos do moodle.
+            require_once("{$CFG->dirroot}/group/lib.php");
 
-          groups_update_group($groupObj);
+            groups_update_group($groupobject);
 
-          $transaction->allow_commit();
+            $transaction->allow_commit();
 
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             $transaction->rollback($e);
         }
 
@@ -159,6 +173,9 @@ class local_wsintegracao_group extends wsintegracao_base{
         return $returndata;
     }
 
+    /**
+     * @return external_function_parameters
+     */
     public static function update_group_parameters() {
         return new external_function_parameters(
             array(
@@ -172,6 +189,9 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function update_group_returns() {
         return new external_single_structure(
             array(
@@ -182,13 +202,21 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @param $group
+     * @return mixed
+     * @throws Exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     */
     public static function remove_group($group) {
         global $CFG, $DB;
 
         // Valida os parametros.
         self::validate_parameters(self::remove_group_parameters(), array('group' => $group));
 
-        // Inlcui a biblioteca de grupos do moodle
+        // Inclui a biblioteca de grupos do moodle.
         require_once("{$CFG->dirroot}/group/lib.php");
 
         // Transforma o array em objeto.
@@ -198,25 +226,25 @@ class local_wsintegracao_group extends wsintegracao_base{
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
         // Se nao existir curso mapeado para a turma dispara uma exceção.
-        if(!$groupid) {
-          throw new Exception("Nenhum group mapeado com o grupo com grp_id: " . $group->grp_id);
+        if (!$groupid) {
+            throw new \Exception("Nenhum group mapeado com o grupo com grp_id: " . $group->grp_id);
         }
 
-        try{
+        try {
 
-          // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-          $transaction = $DB->start_delegated_transaction();
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
 
-          // Deleta o curso usando a biblioteca do proprio moodle.
-          groups_delete_group($groupid);
+            // Deleta o curso usando a biblioteca do proprio moodle.
+            groups_delete_group($groupid);
 
-          //deleta os registros da tabela de controle
-          $DB->delete_records('int_grupo_group', array('groupid'=>$groupid));
+            // Deleta os registros da tabela de controle.
+            $DB->delete_records('int_grupo_group', array('groupid' => $groupid));
 
-          // Persiste as operacoes em caso de sucesso.
-          $transaction->allow_commit();
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
 
-        }catch(Exception $e) {
+        } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
@@ -229,6 +257,9 @@ class local_wsintegracao_group extends wsintegracao_base{
 
     }
 
+    /**
+     * @return external_function_parameters
+     */
     public static function remove_group_parameters() {
         return new external_function_parameters(
             array(
@@ -241,6 +272,9 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function remove_group_returns() {
         return new external_single_structure(
             array(
@@ -251,48 +285,66 @@ class local_wsintegracao_group extends wsintegracao_base{
         );
     }
 
+    /**
+     * @param $courseid
+     * @param $name
+     * @return mixed
+     * @throws dml_exception
+     */
     private static function get_group_by_name($courseid, $name) {
-      global $DB;
+        global $DB;
 
-      $group = $DB->get_record('groups', array('courseid'=>$courseid, 'name' => $name), '*');
+        $group = $DB->get_record('groups', array('courseid' => $courseid, 'name' => $name), '*');
 
-      return $group;
+        return $group;
     }
 
-    protected static function get_create_group_validation_rules($group)
-    {
+    /**
+     * @param $group
+     * @return int
+     * @throws Exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    protected static function get_create_group_validation_rules($group) {
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
-        // Dispara uma exceção caso ja exista um grupo com esse grp_id
-        if($groupid) {
-          throw new Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
+        // Dispara uma exceção caso ja exista um grupo com esse grp_id.
+        if ($groupid) {
+            throw new \Exception("Ja existe um grupo mapeado para o ambiente com grp_id: " . $groupid);
         }
 
         // Busca o id do curso apartir do trm_id da turma.
         $courseid = self::get_course_by_trm_id($group->trm_id);
 
         // Se nao existir curso mapeado para a turma dispara uma exceção.
-        if(!$courseid) {
-            throw new Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
+        if (!$courseid) {
+            throw new \Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
         }
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
 
-        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso
-        if($groupbyname) {
-            throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
+        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso.
+        if ($groupbyname) {
+            throw new \Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
         }
 
         return $courseid;
     }
 
-    protected static function get_update_group_validation_rules($group)
-    {
+    /**
+     * @param $group
+     * @return int
+     * @throws Exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    protected static function get_update_group_validation_rules($group) {
         $groupid = self::get_group_by_grp_id($group->grp_id);
 
-        // Dispara uma exceção caso não exista um grupo com esse grp_id
-        if(!$groupid) {
-          throw new Exception("Não existe nenhum grupo mapeado com o moodle com grp_id: " . $group->grp_id);
+        // Dispara uma exceção caso não exista um grupo com esse grp_id.
+        if (!$groupid) {
+            throw new \Exception("Não existe nenhum grupo mapeado com o moodle com grp_id: " . $group->grp_id);
         }
 
         // Busca o id do curso apartir do trm_id da turma.
@@ -300,9 +352,9 @@ class local_wsintegracao_group extends wsintegracao_base{
 
         $groupbyname = self::get_group_by_name($courseid, $group->name);
 
-        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso
-        if($groupbyname) {
-            throw new Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
+        // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso.
+        if ($groupbyname) {
+            throw new \Exception("Ja existe um grupo com o mesmo nome nessa turma trm_id: " . $group->trm_id);
         }
 
         return $groupid;

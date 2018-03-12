@@ -1,4 +1,22 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once('base.php');
 
 /**
  * Class local_wsintegracao_discipline
@@ -6,73 +24,79 @@
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class local_wsintegracao_discipline extends wsintegracao_base {
 
-require_once('base.php');
-
-class local_wsintegracao_discipline extends wsintegracao_base
-{
-    public static function create_discipline($discipline)
-    {
+    /**
+     * @param $discipline
+     * @return null
+     * @throws \Exception
+     * @throws dml_exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     */
+    public static function create_discipline($discipline) {
         global $CFG, $DB;
 
-        // Validação dos parametros
+        // Validação dos parametros.
         self::validate_parameters(self::create_discipline_parameters(), array('discipline' => $discipline));
 
-        // transforma o array em objeto
+        // Transforma o array em objeto.
         $discipline['pes_id'] = $discipline['teacher']['pes_id'];
         $discipline = (object)$discipline;
 
-        // Busca o id da section a partir do id da oferta da disciplina
-        $sectionId = self::get_section_by_ofd_id($discipline->ofd_id);
+        // Busca o id da section a partir do id da oferta da disciplina.
+        $sectionid = self::get_section_by_ofd_id($discipline->ofd_id);
 
-        // Dispara uma exceção caso já tenha um mapeamento entre a oferta da disciplina e uma section
-        if($sectionId) {
-            throw new Exception('Já existe uma section mapeada para essa disciplina oferecida. ofd_id: '.$discipline->ofd_id);
+        // Dispara uma exceção caso já tenha um mapeamento entre a oferta da disciplina e uma section.
+        if ($sectionid) {
+            throw new \Exception('Já existe uma section mapeada para essa disciplina oferecida. ofd_id: ' . $discipline->ofd_id);
         }
 
-        // Busca o id do curso a partir do id da turma
-        $courseId = self::get_course_by_trm_id($discipline->trm_id);
+        // Busca o id do curso a partir do id da turma.
+        $courseid = self::get_course_by_trm_id($discipline->trm_id);
 
-        // Dispara uma exceção caso essa turma não esteja mapeada para um curso
-        if(!$courseId) {
-            throw new Exception('Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: '.$discipline->trm_id);
+        // Dispara uma exceção caso essa turma não esteja mapeada para um curso.
+        if (!$courseid) {
+            $message = 'Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: ' . $discipline->trm_id;
+            throw new \Exception($message);
         }
 
-        // Pega o numero da ultima section do curso
-        $lastSection = self::get_last_section_course($courseId);
+        // Pega o numero da ultima section do curso.
+        $lastsection = self::get_last_section_course($courseid);
 
-        // Ultima section do curso
-        $lastSection = $lastSection->section;
+        // Ultima section do curso.
+        $lastsection = $lastsection->section;
 
         $returndata = null;
 
         try {
 
-            // Inicia a transação, qualquer erro que aconteça o rollback será executado
+            // Inicia a transação, qualquer erro que aconteça o rollback será executado.
             $transaction = $DB->start_delegated_transaction();
 
-            // Insere nova section no curso
-            $section['course'] = $courseId;
-            $section['section'] = $lastSection + 1;
+            // Insere nova section no curso.
+            $section['course'] = $courseid;
+            $section['section'] = $lastsection + 1;
             $section['name'] = $discipline->name;
             $section['summaryformat'] = 1;
             $section['visible'] = 1;
 
             $section['id'] = $DB->insert_record('course_sections', $section);
 
-            //verifica se existe um usuário no moodle com esse Id no lado do harpia
-            $userId = self::get_user_by_pes_id($discipline->pes_id);
+            // Verifica se existe um usuário no moodle com esse Id no lado do harpia.
+            $userid = self::get_user_by_pes_id($discipline->pes_id);
 
-            // Caso não exista usuario, cria-se um novo usuário
-            if(!$userId) {
-                $userId = self::create_teacher((object)$discipline->teacher);
+            // Caso não exista usuario, cria-se um novo usuário.
+            if (!$userid) {
+                $userid = self::create_teacher((object)$discipline->teacher);
             }
 
-            // Atribui o professor ao curso
-            $professor_role = get_config('local_integracao')->professor;
-            self::enrol_user_in_moodle_course($userId, $courseId, $professor_role);
+            // Atribui o professor ao curso.
+            $teacherrole = get_config('local_integracao')->professor;
+            self::enrol_user_in_moodle_course($userid, $courseid, $teacherrole);
 
-            // Adiciona as informações na tabela de controle entre as ofertas de disciplina e as sections
+            // Adiciona as informações na tabela de controle entre as ofertas de disciplina e as sections.
             $data['ofd_id'] = $discipline->ofd_id;
             $data['sectionid'] = $section['id'];
             $data['pes_id'] = $discipline->pes_id;
@@ -93,19 +117,21 @@ class local_wsintegracao_discipline extends wsintegracao_base
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
-        // Recria o cache do curso
+        // Recria o cache do curso.
         require_once($CFG->libdir . "/modinfolib.php");
-        rebuild_course_cache($courseId, true);
+        rebuild_course_cache($courseid, true);
 
         return $returndata;
     }
 
-    public static function create_discipline_parameters()
-    {
+    /**
+     * @return external_function_parameters
+     */
+    public static function create_discipline_parameters() {
         return new external_function_parameters(
             array(
                 'discipline' => new external_single_structure(
@@ -114,7 +140,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
                         'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor'),
                         'teacher' => new external_single_structure(
                             array(
-                                'pes_id' => new external_value(PARAM_INT,'Id de pessoa vinculado ao professor no gestor'),
+                                'pes_id' => new external_value(PARAM_INT, 'Id de pessoa vinculado ao professor no gestor'),
                                 'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do professor'),
                                 'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do professor'),
                                 'email' => new external_value(PARAM_TEXT, 'Email do professor'),
@@ -130,6 +156,9 @@ class local_wsintegracao_discipline extends wsintegracao_base
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function create_discipline_returns() {
         return new external_single_structure(
             array(
@@ -140,11 +169,19 @@ class local_wsintegracao_discipline extends wsintegracao_base
         );
     }
 
-    public static function enrol_student_discipline($enrol)
-    {
+    /**
+     * @param $enrol
+     * @return array|null
+     * @throws \Exception
+     * @throws dml_exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     */
+    public static function enrol_student_discipline($enrol) {
         global $CFG, $DB;
 
-        // Validação dos parametros
+        // Validação dos parametros.
         self::validate_parameters(self::enrol_student_discipline_parameters(), array('enrol' => $enrol));
 
         $enrol = (object)$enrol;
@@ -153,23 +190,24 @@ class local_wsintegracao_discipline extends wsintegracao_base
         $section = self::get_section_by_ofd_id($enrol->ofd_id);
 
         // Dispara uma excessao caso nao tenha um mapeamento entre a oferta da disciplina e uma section.
-        if(!$section) {
-            throw new Exception("Nao existe uma section mapeada para essa disciplina oferecida. ofd_id: " . $enrol->ofd_id);
+        if (!$section) {
+            throw new \Exception("Nao existe uma section mapeada para essa disciplina oferecida. ofd_id: " . $enrol->ofd_id);
         }
 
         // Busca o id do usuario apartir do alu_id do aluno.
         $userid = self::get_user_by_pes_id($enrol->pes_id);
 
         // Dispara uma excessao se esse aluno nao estiver mapeado para um usuario.
-        if(!$userid) {
-            throw new Exception("Nenhum usuario esta mapeado para o aluno com pes_id: " . $enrol->pes_id);
+        if (!$userid) {
+            throw new \Exception("Nenhum usuario esta mapeado para o aluno com pes_id: " . $enrol->pes_id);
         }
 
-        // Verifica se o aluno ja esta matriculado para a disciplina
-        $userdiscipline = $DB->get_record('int_user_discipline', array('userid'=>$userid, 'sectionid'=>$section->sectionid), '*');
+        // Verifica se o aluno ja esta matriculado para a disciplina.
+        $userparams = array('userid' => $userid, 'sectionid' => $section->sectionid);
+        $userdiscipline = $DB->get_record('int_user_discipline', $userparams, '*');
 
-        if($userdiscipline) {
-            throw new Exception("O aluno ja esta matriculado para essa disciplina. ofd_id: " . $enrol->ofd_id);
+        if ($userdiscipline) {
+            throw new \Exception("O aluno ja esta matriculado para essa disciplina. ofd_id: " . $enrol->ofd_id);
         }
 
         $returndata = null;
@@ -193,7 +231,7 @@ class local_wsintegracao_discipline extends wsintegracao_base
                 'message' => 'Aluno matriculado na disciplina'
             );
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
@@ -201,21 +239,26 @@ class local_wsintegracao_discipline extends wsintegracao_base
 
     }
 
-    public static function enrol_student_discipline_parameters()
-    {
+    /**
+     * @return external_function_parameters
+     */
+    public static function enrol_student_discipline_parameters() {
         return new external_function_parameters(
             array(
                 'enrol' => new external_single_structure(
-                  array(
-                      'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia'),
-                      'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina'),
-                      'pes_id' => new external_value(PARAM_TEXT, 'Id do aluno')
-                  )
+                    array(
+                        'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia'),
+                        'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina'),
+                        'pes_id' => new external_value(PARAM_TEXT, 'Id do aluno')
+                    )
                 )
             )
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function enrol_student_discipline_returns() {
         return new external_single_structure(
             array(
@@ -226,76 +269,84 @@ class local_wsintegracao_discipline extends wsintegracao_base
         );
     }
 
-    public static function remove_discipline($discipline)
-    {
+    /**
+     * @param $discipline
+     * @return mixed
+     * @throws \Exception
+     * @throws dml_exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     */
+    public static function remove_discipline($discipline) {
         global $CFG, $DB;
 
-        // Validação dos parametros
+        // Validação dos parametros.
         self::validate_parameters(self::remove_discipline_parameters(), array('discipline' => $discipline));
 
-        // transforma o array em objeto
-        $discipline = (object)$discipline;
+        $discipline = (object) $discipline;
 
-        // Busca o id da section a partir do id da oferta da disciplina
-        $sectionId = self::get_section_by_ofd_id($discipline->ofd_id);
+        // Busca o id da section a partir do id da oferta da disciplina.
+        $sectionid = self::get_section_by_ofd_id($discipline->ofd_id);
 
-        // Dispara uma exceção caso não tenha um mapeamento entre a oferta da disciplina e uma section
-        if(!$sectionId) {
-            throw new Exception('Não existe uma section mapeada para essa disciplina oferecida. ofd_id: '.$discipline->ofd_id);
+        // Dispara uma exceção caso não tenha um mapeamento entre a oferta da disciplina e uma section.
+        if (!$sectionid) {
+            throw new \Exception('Não existe uma section mapeada para essa disciplina oferecida. ofd_id: ' . $discipline->ofd_id);
         }
 
         try {
-            // Inicia a transação, qualquer erro que aconteça o rollback será executado
+            // Inicia a transação, qualquer erro que aconteça o rollback será executado.
             $transaction = $DB->start_delegated_transaction();
 
-            //adiciona a biblioteca de cursos do moodle
+            // Adiciona a biblioteca de cursos do moodle.
             require_once("{$CFG->dirroot}/course/lib.php");
 
-            // Busca a section no moodle
-            $section = $DB->get_record('course_sections', array( 'id' => $sectionId->sectionid ));
+            // Busca a section no moodle.
+            $section = $DB->get_record('course_sections', array('id' => $sectionid->sectionid));
 
-            // Recebe o Id do curso do lado do Moodle
-            $courseId = $section->course;
+            // Recebe o Id do curso do lado do Moodle.
+            $courseid = $section->course;
 
-            //busca o curso da disciplina no moodle
-            $course = $DB->get_record('course', array( 'id' => $courseId ));
+            // Busca o curso da disciplina no moodle.
+            $course = $DB->get_record('course', array('id' => $courseid));
 
-            //pega a tabela auxiliar antes de deletar o registro
-            $sectionMapeamento = $DB->get_record('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
+            // Pega a tabela auxiliar antes de deletar o registro.
+            $sectionmaping = $DB->get_record('int_discipline_section', array('ofd_id' => $discipline->ofd_id));
 
-            //deleta o registro da tabela de mapeamento
-            $DB->delete_records('int_discipline_section', array( 'ofd_id' => $discipline->ofd_id ));
+            // Deleta o registro da tabela de mapeamento.
+            $DB->delete_records('int_discipline_section', array('ofd_id' => $discipline->ofd_id));
 
-            //deleta a section do curso do moodle
+            // Deleta a section do curso do moodle.
             course_delete_section($course, $section);
 
-            //verifica se o usuário que estava vinculado a disciplina está vinculado a alguma outra section no moodle depois de deletar o registro
-            $professorMapeamento = $DB->get_records('int_discipline_section', array( 'pes_id' => $sectionMapeamento->pes_id ));
+            // Verifica se o usuário que estava vinculado a disciplina está vinculado
+            // a alguma outra section no moodle depois de deletar o registro.
+            $teachermaping = $DB->get_records('int_discipline_section', array('pes_id' => $sectionmaping->pes_id));
 
-            //busca o usuário no moodle que tenha o pes_id enviado
-            $userid = self::get_user_by_pes_id($sectionMapeamento->pes_id);
+            // Busca o usuário no moodle que tenha o pes_id enviado.
+            $userid = self::get_user_by_pes_id($sectionmaping->pes_id);
 
-            if (!$professorMapeamento) {
-                self::unenrol_user_in_moodle_course($userid, $courseId);
+            if (!$teachermaping) {
+                self::unenrol_user_in_moodle_course($userid, $courseid);
             }
 
-            if ($professorMapeamento) {
-                $vinculado = self::verify_if_teacher_enroled_on_another_section_course($professorMapeamento, $courseId);
+            if ($teachermaping) {
+                $vinculado = self::verify_if_teacher_enroled_on_another_section_course($teachermaping, $courseid);
 
                 if (!$vinculado) {
-                    self::unenrol_user_in_moodle_course($userid, $courseId);
+                    self::unenrol_user_in_moodle_course($userid, $courseid);
                 }
             }
+
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
 
-        } catch(Exception $e) {
+        } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
-        // Recria o cache do curso
+        // Recria o cache do curso.
         require_once($CFG->libdir . "/modinfolib.php");
-        rebuild_course_cache($courseId, true);
+        rebuild_course_cache($courseid, true);
 
         $returndata['id'] = 0;
         $returndata['status'] = 'success';
@@ -304,8 +355,10 @@ class local_wsintegracao_discipline extends wsintegracao_base
         return $returndata;
     }
 
-    public static function remove_discipline_parameters()
-    {
+    /**
+     * @return external_function_parameters
+     */
+    public static function remove_discipline_parameters() {
         return new external_function_parameters(
             array(
                 'discipline' => new external_single_structure(
@@ -317,6 +370,9 @@ class local_wsintegracao_discipline extends wsintegracao_base
         );
     }
 
+    /**
+     * @return external_single_structure
+     */
     public static function remove_discipline_returns() {
         return new external_single_structure(
             array(
@@ -327,32 +383,42 @@ class local_wsintegracao_discipline extends wsintegracao_base
         );
     }
 
-    private static function create_teacher($teacher)
-    {
-      global $DB;
+    /**
+     * @param $teacher
+     * @return int
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    private static function create_teacher($teacher) {
+        global $DB;
 
-      $userid = self::save_user($teacher);
+        $userid = self::save_user($teacher);
 
-      $data['pes_id'] = $teacher->pes_id;
-      $data['userid'] = $userid;
+        $data['pes_id'] = $teacher->pes_id;
+        $data['userid'] = $userid;
 
-      $DB->insert_record('int_pessoa_user', $data);
+        $DB->insert_record('int_pessoa_user', $data);
 
-      return $userid;
+        return $userid;
     }
 
-    private static function verify_if_teacher_enroled_on_another_section_course($professorMapeamento, $courseId)
-    {
-      global $DB;
+    /**
+     * @param $teachermaping
+     * @param $courseid
+     * @return bool
+     * @throws dml_exception
+     */
+    private static function verify_if_teacher_enroled_on_another_section_course($teachermaping, $courseid) {
+        global $DB;
 
-      foreach ($professorMapeamento as $mapeamento) {
+        foreach ($teachermaping as $maping) {
 
-        //verifica se o professor está vinculado em alguma section do mesmo curso
-        $section = $DB->get_record('course_sections', array( 'id' => $mapeamento->sectionid ));
-        if ($section->course == $courseId){
-          return true;
+            // Verifica se o professor está vinculado em alguma section do mesmo curso.
+            $section = $DB->get_record('course_sections', array('id' => $maping->sectionid));
+            if ($section->course == $courseid) {
+                return true;
+            }
         }
-      }
-      return false;
+        return false;
     }
 }

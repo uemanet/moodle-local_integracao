@@ -1,6 +1,5 @@
 <?php
-
-// This file is part of Ranking block for Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,34 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * Integracao settings file
  *
- * @package    integracao
- * @copyright  2017 UemaNet http://www.uemanet.uema.br
- * @authors    Felipe Pimenta
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package integracao
+ * @author Felipe Pimenta
+ * @copyright 2018 Uemanet
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
 global $CFG;
 
-// Ensure the configurations for this site are set
-if ( $hassiteconfig ){
+// Ensure the configurations for this site are set.
+if ($hassiteconfig) {
 
     global $CFG;
 
     // Create the new settings page
     // - in a local plugin this is not defined as standard, so normal $settings->methods will throw an error as
-    // $settings will be NULL
-    $settings = new admin_settingpage( 'local_integracao', 'Configurações' );
+    // $settings will be NULL.
+    $settings = new admin_settingpage('local_integracao', 'Configurações');
 
-    // Create
-    $ADMIN->add( 'localplugins', $settings );
+    // Create.
+    $ADMIN->add('localplugins', $settings);
 
-    // Add a setting field to the settings for this page
+    // Add a setting field to the settings for this page.
 
     require_once($CFG->libdir . '/accesslib.php');
 
@@ -56,7 +54,7 @@ if ( $hassiteconfig ){
 
     $settings->add(
         new admin_setting_configselect('local_integracao/aluno', 'Aluno',
-        '', '1', $papeis)
+            '', '1', $papeis)
     );
 
     $settings->add(
