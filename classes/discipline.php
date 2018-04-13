@@ -212,9 +212,10 @@ class local_wsintegracao_discipline extends wsintegracao_base {
 
         $returndata = null;
 
+        // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+        $transaction = $DB->start_delegated_transaction();
+
         try {
-            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
-            $transaction = $DB->start_delegated_transaction();
 
             $data['mof_id'] = $enrol->mof_id;
             $data['userid'] = $userid;
@@ -236,7 +237,6 @@ class local_wsintegracao_discipline extends wsintegracao_base {
         }
 
         return $returndata;
-
     }
 
     /**
@@ -257,9 +257,97 @@ class local_wsintegracao_discipline extends wsintegracao_base {
     }
 
     /**
+     * @param $batch
+     * @throws Exception
+     * @throws dml_exception
+     * @throws dml_transaction_exception
+     * @throws moodle_exception
+     * @return array
+     */
+    public static function batch_enrol_student_discipline($batch) {
+        global $CFG, $DB;
+
+        $transaction = $DB->start_delegated_transaction();
+
+        try {
+            foreach ($batch as $enrol) {
+                // Validação dos parametros.
+                self::validate_parameters(self::enrol_student_discipline_parameters(), array('enrol' => $enrol));
+
+                $enrol = (object)$enrol;
+
+                // Busca a seccao apartir do id da oferta da disciplina.
+                $section = self::get_section_by_ofd_id($enrol->ofd_id);
+
+                // Dispara uma excessao caso nao tenha um mapeamento entre a oferta da disciplina e uma section.
+                if (!$section) {
+                    throw new \Exception("Nao existe uma section mapeada para a disciplina oferecida. ofd_id: " . $enrol->ofd_id);
+                }
+
+                // Busca o id do usuario apartir do alu_id do aluno.
+                $userid = self::get_user_by_pes_id($enrol->pes_id);
+
+                // Dispara uma excessao se esse aluno nao estiver mapeado para um usuario.
+                if (!$userid) {
+                    throw new \Exception("Nenhum usuario esta mapeado para o aluno com pes_id: " . $enrol->pes_id);
+                }
+
+                // Verifica se o aluno ja esta matriculado para a disciplina.
+                $userparams = array('userid' => $userid, 'sectionid' => $section->sectionid);
+                $userdiscipline = $DB->get_record('int_user_discipline', $userparams, '*');
+
+                if ($userdiscipline) {
+                    throw new \Exception("O aluno ja esta matriculado para essa disciplina. ofd_id: " . $enrol->ofd_id);
+                }
+
+                $returndata = null;
+
+                // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+                $data['mof_id'] = $enrol->mof_id;
+                $data['userid'] = $userid;
+                $data['sectionid'] = $section->sectionid;
+
+                $res = $DB->insert_record('int_user_discipline', $data);
+            }
+
+            // Persiste todas as matriculas em caso de sucesso.
+            $transaction->allow_commit();
+
+            $returndata = array(
+                'id' => $res,
+                'status' => 'success',
+                'message' => 'Matrícula em lote concluída com sucesso'
+            );
+        } catch (\Exception $exception) {
+            $transaction->rollback($exception);
+        }
+
+        return $returndata;
+    }
+
+    /**
+     * @return external_function_parameters
+     */
+    public static function batch_enrol_student_discipline_parameters() {
+        $innerstructure = new external_single_structure(
+            array(
+                'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia'),
+                'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina'),
+                'pes_id' => new external_value(PARAM_TEXT, 'Id do aluno')
+            )
+        );
+
+        return new external_function_parameters(
+            array(
+                'enrol' => new external_multiple_structure($innerstructure)
+            )
+        );
+    }
+
+    /**
      * @return external_single_structure
      */
-    public static function enrol_student_discipline_returns() {
+    public static function batch_enrol_student_discipline_returns() {
         return new external_single_structure(
             array(
                 'id' => new external_value(PARAM_INT, 'Id do aluno matriculado'),
@@ -283,7 +371,7 @@ class local_wsintegracao_discipline extends wsintegracao_base {
         // Validação dos parametros.
         self::validate_parameters(self::remove_discipline_parameters(), array('discipline' => $discipline));
 
-        $discipline = (object) $discipline;
+        $discipline = (object)$discipline;
 
         // Busca o id da section a partir do id da oferta da disciplina.
         $sectionid = self::get_section_by_ofd_id($discipline->ofd_id);
