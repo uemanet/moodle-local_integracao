@@ -122,6 +122,13 @@ $functions = array(
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
     ),
+    'local_integracao_batch_enrol_student_discipline' => array(
+        'classname' => 'local_wsintegracao_discipline',
+        'methodname' => 'batch_enrol_student_discipline',
+        'classpath' => 'local/integracao/classes/discipline.php',
+        'description' => 'Enrol multiple students in a discipline',
+        'type' => 'write'
+    ),
     'local_integracao_delete_discipline' => array(
         'classname' => 'local_wsintegracao_discipline',
         'methodname' => 'remove_discipline',
@@ -176,6 +183,7 @@ $services = array(
             'local_integracao_unenrol_student_group',
             'local_integracao_create_discipline',
             'local_integracao_enrol_student_discipline',
+            'local_integracao_batch_enrol_student_discipline',
             'local_integracao_delete_discipline',
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
