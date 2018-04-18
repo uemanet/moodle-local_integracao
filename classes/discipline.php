@@ -257,6 +257,19 @@ class local_wsintegracao_discipline extends wsintegracao_base {
     }
 
     /**
+     * @return external_single_structure
+     */
+    public static function enrol_student_discipline_returns() {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id do aluno matriculado'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
+    /**
      * @param $batch
      * @throws Exception
      * @throws dml_exception
