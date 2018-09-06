@@ -132,6 +132,81 @@ class local_wsintegracao_student extends wsintegracao_base {
 
     /**
      * @param $student
+     * @return null
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     */
+    public static function unenrol_student($student) {
+        global $CFG, $DB;
+
+        // Validação dos paramêtros.
+        self::validate_parameters(self::unenrol_student_parameters(), array('student' => $student));
+
+        $student = (object)$student;
+
+        $returndata = null;
+
+        try {
+            // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
+            $transaction = $DB->start_delegated_transaction();
+
+            // Verifica se o aluno ja esta matriculado para a disciplina.
+            $params = array('mat_id' => $student->mat_id);
+            $usercourse = $DB->get_record('	mdl_int_student_course', $userparams, '*');
+
+            if (!$usercourse) {
+                throw new \Exception("A matrícula com mat_id: ".$enrol->mat_id ." não está mapeada com o ambiente virtual");
+            }
+
+            self::unenrol_user_in_moodle_course($usercourse->userid, $usercourse->courseid);
+
+            //Remove o registro da tabela de mapeamento
+            $res = $DB->delete_records('int_student_course', ['mat_id' => $student->mat_id]);
+
+            // Prepara o array de retorno.
+            $returndata['id'] = $student->mat_id;
+            $returndata['status'] = 'success';
+            $returndata['message'] = 'Aluno desmatriculado com sucesso';
+            // Persiste as operacoes em caso de sucesso.
+            $transaction->allow_commit();
+
+        } catch (\Exception $e) {
+            $transaction->rollback($e);
+        }
+
+        return $returndata;
+    }
+
+    /**
+     * @return external_function_parameters
+     */
+    public static function unenrol_student_parameters() {
+        return new external_function_parameters(
+            array(
+                'student' => new external_single_structure(
+                    array(
+                        'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no harpia')
+                    )
+                )
+            )
+        );
+    }
+
+    /**
+     * @return external_single_structure
+     */
+    public static function unenrol_student_returns() {
+        return new external_single_structure(
+            array(
+                'id' => new external_value(PARAM_INT, 'Id'),
+                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+            )
+        );
+    }
+
+    /**
+     * @param $student
      * @return array
      * @throws \Exception
      * @throws coding_exception
