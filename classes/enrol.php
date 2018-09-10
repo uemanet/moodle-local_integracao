@@ -136,7 +136,7 @@ class local_wsintegracao_enrol extends wsintegracao_base {
 
         try {
 
-            $res = $DB->insert_record('int_user_discipline',['mof_id' => $enrol->mof_id]);
+            $res = $DB->delete_records('int_user_discipline',['mof_id' => $enrol->mof_id]);
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();

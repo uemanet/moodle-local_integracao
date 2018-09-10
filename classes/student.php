@@ -152,7 +152,7 @@ class local_wsintegracao_student extends wsintegracao_base {
 
             // Verifica se o aluno ja esta matriculado para a disciplina.
             $params = array('mat_id' => $student->mat_id);
-            $usercourse = $DB->get_record('	mdl_int_student_course', $userparams, '*');
+            $usercourse = $DB->get_record('int_student_course', $params, '*');
 
             if (!$usercourse) {
                 throw new \Exception("A matrícula com mat_id: ".$enrol->mat_id ." não está mapeada com o ambiente virtual");
@@ -161,7 +161,7 @@ class local_wsintegracao_student extends wsintegracao_base {
             self::unenrol_user_in_moodle_course($usercourse->userid, $usercourse->courseid);
 
             //Remove o registro da tabela de mapeamento
-            $res = $DB->delete_records('int_student_course', ['mat_id' => $student->mat_id]);
+            $DB->delete_records('int_student_course', ['mat_id' => $student->mat_id]);
 
             // Prepara o array de retorno.
             $returndata['id'] = $student->mat_id;
