@@ -87,6 +87,13 @@ $functions = array(
         'description' => 'Enrol a student',
         'type' => 'write'
     ),
+    'local_integracao_unenrol_student' => array(
+        'classname' => 'local_wsintegracao_student',
+        'methodname' => 'unenrol_student',
+        'classpath' => 'local/integracao/classes/student.php',
+        'description' => 'Unenrol a student',
+        'type' => 'write'
+    ),
     'local_integracao_change_role_student_course' => array(
         'classname' => 'local_wsintegracao_student',
         'methodname' => 'change_role_student_course',
@@ -122,11 +129,25 @@ $functions = array(
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
     ),
+    'local_integracao_unenrol_student_discipline' => array(
+        'classname' => 'local_wsintegracao_enrol',
+        'methodname' => 'unenrol_student_discipline',
+        'classpath' => 'local/integracao/classes/enrol.php',
+        'description' => 'Unenrol a student in a discipline',
+        'type' => 'write'
+    ),
     'local_integracao_batch_enrol_student_discipline' => array(
         'classname' => 'local_wsintegracao_discipline',
         'methodname' => 'batch_enrol_student_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Enrol multiple students in a discipline',
+        'type' => 'write'
+    ),
+    'local_integracao_batch_unenrol_student_discipline' => array(
+        'classname' => 'local_wsintegracao_enrol',
+        'methodname' => 'batch_unenrol_student_discipline',
+        'classpath' => 'local/integracao/classes/enrol.php',
+        'description' => 'Unenrol multiple students in a discipline',
         'type' => 'write'
     ),
     'local_integracao_delete_discipline' => array(
@@ -178,12 +199,15 @@ $services = array(
             'local_integracao_enrol_tutor',
             'local_integracao_unenrol_tutor_group',
             'local_integracao_enrol_student',
+            'local_integracao_unenrol_student',
             'local_integracao_change_role_student_course',
             'local_integracao_change_student_group',
             'local_integracao_unenrol_student_group',
             'local_integracao_create_discipline',
             'local_integracao_enrol_student_discipline',
+            'local_integracao_unenrol_student_discipline',
             'local_integracao_batch_enrol_student_discipline',
+            'local_integracao_batch_unenrol_student_discipline',
             'local_integracao_delete_discipline',
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
