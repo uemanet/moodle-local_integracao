@@ -178,6 +178,20 @@ $functions = array(
         'description' => 'Update a user',
         'type' => 'write'
     ),
+    'local_integracao_get_user' => array(
+        'classname' => 'local_wsintegracao_user',
+        'methodname' => 'get_user',
+        'classpath' => 'local/integracao/classes/user.php',
+        'description' => 'Get a user',
+        'type' => 'read'
+    ),
+    'local_integracao_map_user' => array(
+        'classname' => 'local_wsintegracao_user',
+        'methodname' => 'map_user',
+        'classpath' => 'local/integracao/classes/user.php',
+        'description' => 'Map a user',
+        'type' => 'write'
+    ),
     'local_integracao_ping' => array(
         'classname' => 'local_wsintegracao_ping',
         'methodname' => 'ping',
@@ -212,6 +226,8 @@ $services = array(
             'local_integracao_get_grades_batch',
             'local_integracao_change_teacher',
             'local_integracao_update_user',
+            'local_integracao_map_user',
+            'local_integracao_get_user',
             'local_integracao_ping'
         ),
         'restrictedusers' => 0,
