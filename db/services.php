@@ -25,175 +25,175 @@ defined('MOODLE_INTERNAL') || die();
  */
 $functions = array(
     'local_integracao_create_course' => array(
-        'classname' => 'local_library\local_wsintegracao_course',
+        'classname' => 'local_integracao\local_wsintegracao_course',
         'methodname' => 'create_course',
         'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Creates a new course',
         'type' => 'write'
     ),
     'local_integracao_update_course' => array(
-        'classname' => 'local_library\local_wsintegracao_course',
+        'classname' => 'local_integracao\local_wsintegracao_course',
         'methodname' => 'update_course',
         'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Update a course',
         'type' => 'write'
     ),
     'local_integracao_delete_course' => array(
-        'classname' => 'local_library\local_wsintegracao_course',
+        'classname' => 'local_integracao\local_wsintegracao_course',
         'methodname' => 'remove_course',
         'classpath' => 'local/integracao/classes/course.php',
         'description' => 'Delete a course',
         'type' => 'write'
     ),
     'local_integracao_create_group' => array(
-        'classname' => 'local_library\local_wsintegracao_group',
+        'classname' => 'local_integracao\local_wsintegracao_group',
         'methodname' => 'create_group',
         'classpath' => 'local/integracao/classes/group.php',
         'description' => 'Create a group',
         'type' => 'write'
     ),
     'local_integracao_update_group' => array(
-        'classname' => 'local_library\local_wsintegracao_group',
+        'classname' => 'local_integracao\local_wsintegracao_group',
         'methodname' => 'update_group',
         'classpath' => 'local/integracao/classes/group.php',
         'description' => 'Update a group',
         'type' => 'write'
     ),
     'local_integracao_delete_group' => array(
-        'classname' => 'local_library\local_wsintegracao_group',
+        'classname' => 'local_integracao\local_wsintegracao_group',
         'methodname' => 'remove_group',
         'classpath' => 'local/integracao/classes/group.php',
         'description' => 'Delete a group',
         'type' => 'write'
     ),
     'local_integracao_enrol_tutor' => array(
-        'classname' => 'local_library\local_wsintegracao_tutor',
+        'classname' => 'local_integracao\local_wsintegracao_tutor',
         'methodname' => 'enrol_tutor',
         'classpath' => 'local/integracao/classes/tutor.php',
         'description' => 'Enrol a tutor',
         'type' => 'write'
     ),
     'local_integracao_unenrol_tutor_group' => array(
-        'classname' => 'local_library\local_wsintegracao_tutor',
+        'classname' => 'local_integracao\local_wsintegracao_tutor',
         'methodname' => 'unenrol_tutor_group',
         'classpath' => 'local/integracao/classes/tutor.php',
         'description' => 'Unenrol a tutor from a group',
         'type' => 'write'
     ),
     'local_integracao_enrol_student' => array(
-        'classname' => 'local_library\local_wsintegracao_student',
+        'classname' => 'local_integracao\local_wsintegracao_student',
         'methodname' => 'enrol_student',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Enrol a student',
         'type' => 'write'
     ),
     'local_integracao_unenrol_student' => array(
-        'classname' => 'local_library\local_wsintegracao_student',
+        'classname' => 'local_integracao\local_wsintegracao_student',
         'methodname' => 'unenrol_student',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Unenrol a student',
         'type' => 'write'
     ),
     'local_integracao_change_role_student_course' => array(
-        'classname' => 'local_library\local_wsintegracao_student',
+        'classname' => 'local_integracao\local_wsintegracao_student',
         'methodname' => 'change_role_student_course',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Change role for student in a course',
         'type' => 'write'
     ),
     'local_integracao_change_student_group' => array(
-        'classname' => 'local_library\local_wsintegracao_student',
+        'classname' => 'local_integracao\local_wsintegracao_student',
         'methodname' => 'change_student_group',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Change a student from a group',
         'type' => 'write'
     ),
     'local_integracao_unenrol_student_group' => array(
-        'classname' => 'local_library\local_wsintegracao_student',
+        'classname' => 'local_integracao\local_wsintegracao_student',
         'methodname' => 'unenrol_student_group',
         'classpath' => 'local/integracao/classes/student.php',
         'description' => 'Unenrol a student from a group',
         'type' => 'write'
     ),
     'local_integracao_create_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_discipline',
+        'classname' => 'local_integracao\local_wsintegracao_discipline',
         'methodname' => 'create_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Create a discipline',
         'type' => 'write'
     ),
     'local_integracao_enrol_student_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_discipline',
+        'classname' => 'local_integracao\local_wsintegracao_discipline',
         'methodname' => 'enrol_student_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Enrol a student in a discipline',
         'type' => 'write'
     ),
     'local_integracao_unenrol_student_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_enrol',
+        'classname' => 'local_integracao\local_wsintegracao_enrol',
         'methodname' => 'unenrol_student_discipline',
         'classpath' => 'local/integracao/classes/enrol.php',
         'description' => 'Unenrol a student in a discipline',
         'type' => 'write'
     ),
     'local_integracao_batch_enrol_student_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_discipline',
+        'classname' => 'local_integracao\local_wsintegracao_discipline',
         'methodname' => 'batch_enrol_student_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Enrol multiple students in a discipline',
         'type' => 'write'
     ),
     'local_integracao_batch_unenrol_student_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_enrol',
+        'classname' => 'local_integracao\local_wsintegracao_enrol',
         'methodname' => 'batch_unenrol_student_discipline',
         'classpath' => 'local/integracao/classes/enrol.php',
         'description' => 'Unenrol multiple students in a discipline',
         'type' => 'write'
     ),
     'local_integracao_delete_discipline' => array(
-        'classname' => 'local_library\local_wsintegracao_discipline',
+        'classname' => 'local_integracao\local_wsintegracao_discipline',
         'methodname' => 'remove_discipline',
         'classpath' => 'local/integracao/classes/discipline.php',
         'description' => 'Delete a discipline',
         'type' => 'write'
     ),
     'local_integracao_get_grades_batch' => array(
-        'classname' => 'local_library\local_wsintegracao_grade',
+        'classname' => 'local_integracao\local_wsintegracao_grade',
         'methodname' => 'get_grades_batch',
         'classpath' => 'local/integracao/classes/grade.php',
         'description' => 'Return final grade of a list of students',
         'type' => 'read'
     ),
     'local_integracao_change_teacher' => array(
-        'classname' => 'local_library\local_wsintegracao_professor',
+        'classname' => 'local_integracao\local_wsintegracao_professor',
         'methodname' => 'change_teacher',
         'classpath' => 'local/integracao/classes/professor.php',
         'description' => 'Changes the teacher of a discipline',
         'type' => 'write'
     ),
     'local_integracao_update_user' => array(
-        'classname' => 'local_library\local_wsintegracao_user',
+        'classname' => 'local_integracao\local_wsintegracao_user',
         'methodname' => 'update_user',
         'classpath' => 'local/integracao/classes/user.php',
         'description' => 'Update a user',
         'type' => 'write'
     ),
     'local_integracao_get_user' => array(
-        'classname' => 'local_library\local_wsintegracao_user',
+        'classname' => 'local_integracao\local_wsintegracao_user',
         'methodname' => 'get_user',
         'classpath' => 'local/integracao/classes/user.php',
         'description' => 'Get a user',
         'type' => 'read'
     ),
     'local_integracao_map_user' => array(
-        'classname' => 'local_library\local_wsintegracao_user',
+        'classname' => 'local_integracao\local_wsintegracao_user',
         'methodname' => 'map_user',
         'classpath' => 'local/integracao/classes/user.php',
         'description' => 'Map a user',
         'type' => 'write'
     ),
     'local_integracao_ping' => array(
-        'classname' => 'local_library\local_wsintegracao_ping',
+        'classname' => 'local_integracao\local_wsintegracao_ping',
         'methodname' => 'ping',
         'classpath' => 'local/integracao/classes/ping.php',
         'description' => 'Ping function',
