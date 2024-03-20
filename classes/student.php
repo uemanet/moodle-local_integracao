@@ -14,9 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
+namespace local_integracao;
 
-require_once("base.php");
+use core\context\course as context_course;
+use coding_exception;
+use Exception;
+use core_external\external_value;
+use core_external\external_single_structure;
+use core_external\external_function_parameters;
 
 /**
  * Class local_wsintegracao_student
