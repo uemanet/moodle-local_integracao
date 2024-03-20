@@ -242,10 +242,10 @@ class student extends base {
             throw new \Exception("Não existe uma turma mapeada no moodle com trm_id:" . $student->trm_id);
         }
 
-        $instance = self::get_course_enrol($courseid);
+        $courseenrol = \local_integracao\entity\enrol::get_manual_enrol_method_by_course($courseid);
 
         // Verifica se o aluno está matriculado no curso.
-        $isenrolled = $DB->get_record('user_enrolments', array('enrolid' => $instance->id, 'userid' => $userid));
+        $isenrolled = $DB->get_record('user_enrolments', array('enrolid' => $courseenrol->id, 'userid' => $userid));
 
         if (!$isenrolled) {
             $message = 'Usuario não matriculado na turma. trm_id: ' . $student->trm_id . ', pes_id: ' . $student->pes_id;
