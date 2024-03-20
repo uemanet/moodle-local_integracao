@@ -14,20 +14,40 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * @package integracao
  * @copyright 2018 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user extends base
-{
+class user extends external_api {
+    /**
+     * Update user params
+     * @return external_function_parameters
+     */
+    public static function update_user_parameters() {
+        return new external_function_parameters([
+            'user' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
+                'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
+                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
+                'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
+            ])
+        ]);
+    }
+
     /**
      * @param $user
      * @return mixed
@@ -36,15 +56,14 @@ class user extends base
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      */
-    public static function update_user($user)
-    {
+    public static function update_user($user) {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::update_user_parameters(), array('user' => $user));
+        self::validate_parameters(self::update_user_parameters(), ['user' => $user]);
 
         // Verifica se o o usuário enviado pelo harpia, existe no moodle.
-        $user['id'] = self::get_user_by_pes_id($user['pes_id']);
+        $user['id'] = \local_integracao\entity\user::get_user_by_pes_id($user['pes_id']);
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
         if (!$user['id']) {
@@ -78,40 +97,32 @@ class user extends base
     }
 
     /**
-     * Update user params
-     * @return external_function_parameters
-     */
-    public static function update_user_parameters()
-    {
-        return new external_function_parameters(
-            array(
-                'user' => new external_single_structure(
-                    array(
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
-                        'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
-                        'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
-                    )
-                )
-            )
-        );
-    }
-
-    /**
      * Update user return structure
      * @return external_single_structure
      */
-    public static function update_user_returns()
-    {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+    public static function update_user_returns() {
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
+    }
+
+    /**
+     * Update user params
+     * @return external_function_parameters
+     */
+    public static function get_user_parameters() {
+        return new external_function_parameters([
+            'user' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
+                'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
+                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
+                'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
+            ])
+        ]);
     }
 
     /**
@@ -122,14 +133,13 @@ class user extends base
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      */
-    public static function get_user($user)
-    {
-        global $CFG, $DB;
+    public static function get_user($user) {
+        global $DB;
 
-        self::validate_parameters(self::get_user_parameters(), array('user' => $user));
+        self::validate_parameters(self::get_user_parameters(), ['user' => $user]);
 
-        $result = $DB->get_record('user', array('email' => $user['email']), '*');
-        $mapped = $DB->get_record('int_pessoa_user', array('pes_id' => $user['pes_id'], 'userid' => $result->id), '*');
+        $result = $DB->get_record('user', ['email' => $user['email']], '*');
+        $mapped = $DB->get_record('int_pessoa_user', ['pes_id' => $user['pes_id'], 'userid' => $result->id], '*');
 
         $data['id'] = $result->id;
         $data['firstname'] = $result->firstname;
@@ -146,52 +156,23 @@ class user extends base
     }
 
     /**
-     * Update user params
-     * @return external_function_parameters
-     */
-    public static function get_user_parameters()
-    {
-        return new external_function_parameters(
-            array(
-                'user' => new external_single_structure(
-                    array(
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
-                        'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
-                        'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
-                    )
-                )
-            )
-        );
-    }
-
-    /**
      * Update user return structure
      * @return external_single_structure
      */
-    public static function get_user_returns()
-    {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao'),
-                'data' => new external_single_structure(
-                    array(
-                        'id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
-                        'mapped' => new external_value(PARAM_BOOL, 'Email do usuário')
-
-                    )
-                )
-            )
-        );
+    public static function get_user_returns() {
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao'),
+            'data' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
+                'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
+                'mapped' => new external_value(PARAM_BOOL, 'Email do usuário')
+            ])
+        ]);
     }
-
 
     /**
      * @param $user
@@ -201,21 +182,22 @@ class user extends base
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      */
-    public static function map_user($user)
-    {
-        global $CFG, $DB;
+    public static function map_user($user) {
+        global $DB;
 
-        self::validate_parameters(self::map_user_parameters(), array('user' => $user));
+        self::validate_parameters(self::map_user_parameters(), ['user' => $user]);
 
-        $user_moodle = $DB->get_record('user', array('email' => $user['email']), '*');
-        $mapped = $DB->get_record('int_pessoa_user', array('pes_id' => $user['pes_id'], 'userid' => $user_moodle->id), '*');
+        $user_moodle = $DB->get_record('user', ['email' => $user['email']], '*');
+        $mapped = $DB->get_record('int_pessoa_user', ['pes_id' => $user['pes_id'], 'userid' => $user_moodle->id]);
+
         if ($mapped) {
             throw new \Exception("Usuário com " . $user['pes_id'] . " já está mapeado com o moodle.");
         }
 
         $data['pes_id'] = $user['pes_id'];
         $data['userid'] = $user_moodle->id;
-        $res = $DB->insert_record('int_pessoa_user', $data);
+
+        $DB->insert_record('int_pessoa_user', $data);
 
         $returndata['id'] = $user->id;
         $returndata['status'] = 'success';
@@ -228,36 +210,28 @@ class user extends base
      * Update user params
      * @return external_function_parameters
      */
-    public static function map_user_parameters()
-    {
-        return new external_function_parameters(
-            array(
-                'user' => new external_single_structure(
-                    array(
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
-                        'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
-                        'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
-                    )
-                )
-            )
-        );
+    public static function map_user_parameters() {
+        return new external_function_parameters([
+            'user' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do usuário'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do usuário'),
+                'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
+                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do usuário'),
+                'city' => new external_value(PARAM_TEXT, 'Cidade do usuário')
+            ])
+        ]);
     }
 
     /**
      * Update user return structure
      * @return external_single_structure
      */
-    public static function map_user_returns()
-    {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+    public static function map_user_returns() {
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 }

@@ -14,19 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_grade
  * @copyright 2018 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class grade extends base {
+class grade extends external_api {
 
     /**
      * @param $grades
@@ -39,12 +42,10 @@ class grade extends base {
         global $DB;
 
         // Validate parameters.
-        self::validate_parameters(self::get_grades_batch_parameters(), array('grades' => $grades));
-
-        $retorno = [];
+        self::validate_parameters(self::get_grades_batch_parameters(), ['grades' => $grades]);
 
         $pesid = $grades['pes_id'];
-        $userid = self::get_user_by_pes_id($pesid);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($pesid);
 
         if (!$userid) {
             throw new Exception('Não existe um aluno cadastrado com o pes_id: '.$pesid);
@@ -58,7 +59,7 @@ class grade extends base {
 
         $itensnotas = [];
         foreach ($itens as $item) {
-            $nota = self::get_grade_by_itemid($item['id'], $userid);
+            $nota = \local_integracao\entity\grade::get_grade_by_itemid($item['id'], $userid);
 
             if ($nota) {
                 $itensnotas[] = [
@@ -69,100 +70,37 @@ class grade extends base {
             }
         }
 
-        $retorno = [
+        $return = [
             'pes_id' => $pesid,
             'grades' => json_encode($itensnotas),
             'status' => 'success',
             'message' => 'Notas mapeadas com sucesso.'
         ];
 
-        return $retorno;
+        return $return;
     }
 
     /**
      * @return external_function_parameters
      */
     public static function get_grades_batch_parameters() {
-        return new external_function_parameters(
-            array(
-                'grades' => new external_single_structure(
-                    array(
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no acadêmico'),
-                        'itens' => new external_value(PARAM_TEXT, "Array com os id's dos itens de nota")
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'grades' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no acadêmico'),
+                'itens' => new external_value(PARAM_TEXT, "Array com os id's dos itens de nota")
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function get_grades_batch_returns() {
-            return new external_single_structure(
-                array(
-                    'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no acadêmico'),
-                    'grades' => new external_value(PARAM_TEXT, 'Array com as notas para cada item de nota'),
-                    'status' => new external_value(PARAM_TEXT, 'Status da operação'),
-                    'message' => new external_value(PARAM_TEXT, 'Mensagem da operação')
-                )
-            );
-    }
-
-    /**
-     * @param $itemid
-     * @param $userid
-     * @return float|int|mixed|string
-     * @throws dml_exception
-     */
-    public static function get_grade_by_itemid($itemid, $userid) {
-        global $DB;
-
-        $finalgrade = 0;
-
-        $sql = "SELECT gg.*, gi.scaleid
-                FROM {grade_grades} gg
-                INNER JOIN {grade_items} gi ON gi.id = gg.itemid
-                WHERE userid = :userid
-                AND itemid = :itemid";
-
-        $grade = $DB->get_record_sql($sql, array('userid' => $userid, 'itemid' => $itemid));
-
-        // Retorna 0 caso não seja encontrados registros.
-        if (!$grade) {
-            return 0;
-        }
-
-        if ($grade->scaleid) {
-            return self::get_grade_by_scale($grade->scaleid, $grade->finalgrade);
-        }
-
-        // Formata a nota final.
-        if ($grade->finalgrade) {
-            $finalgrade = number_format($grade->finalgrade, 2);
-        }
-
-        if ($grade->rawgrademax > 10 && $grade->finalgrade > 1) {
-            $finalgrade = ($grade->finalgrade - 1) / $grade->rawgrademax;
-            $finalgrade = number_format($finalgrade, 2);
-        }
-
-        return $finalgrade;
-    }
-
-    /**
-     * @param $scaleid
-     * @param $grade
-     * @return mixed
-     * @throws dml_exception
-     */
-    protected static function get_grade_by_scale($scaleid, $grade) {
-        global $DB;
-
-        $scale = $DB->get_record('scale', array('id' => $scaleid), '*');
-        $scale = $scale->scale;
-        $scalearr = explode(', ', $scale);
-
-        return $scalearr[(int) $grade - 1];
+        return new external_single_structure([
+            'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no acadêmico'),
+            'grades' => new external_value(PARAM_TEXT, 'Array com as notas para cada item de nota'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operação'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem da operação')
+        ]);
     }
 }

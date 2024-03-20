@@ -23,10 +23,10 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2018 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-$observers = array(
-    array(
+$observers = [
+    [
         'eventname' => '*',
-        'callback' => 'local_integracao_helper::observer',
+        'callback' => '\local_integracao\helper::observer',
         'internal' => false
-    )
-);
+    ]
+];

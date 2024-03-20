@@ -14,19 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_course
  * @copyright 2018 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course extends base {
+class course extends external_api {
 
     /**
      * @param $course
@@ -39,7 +43,7 @@ class course extends base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::create_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::create_course_parameters(), ['course' => $course]);
 
         // Transforma o array em objeto.
         $course = (object)$course;
@@ -94,34 +98,28 @@ class course extends base {
      * @return external_function_parameters
      */
     public static function create_course_parameters() {
-        return new external_function_parameters(
-            array(
-                'course' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
-                        'category' => new external_value(PARAM_INT, 'Categoria do curso'),
-                        'shortname' => new external_value(PARAM_TEXT, 'Nome curto do curso'),
-                        'fullname' => new external_value(PARAM_TEXT, 'Nome completo do curso'),
-                        'summaryformat' => new external_value(PARAM_INT, 'Formato do sumario'),
-                        'format' => new external_value(PARAM_TEXT, 'Formato do curso'),
-                        'numsections' => new external_value(PARAM_INT, 'Quantidade de sections')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'course' => new external_single_structure([
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
+                'category' => new external_value(PARAM_INT, 'Categoria do curso'),
+                'shortname' => new external_value(PARAM_TEXT, 'Nome curto do curso'),
+                'fullname' => new external_value(PARAM_TEXT, 'Nome completo do curso'),
+                'summaryformat' => new external_value(PARAM_INT, 'Formato do sumario'),
+                'format' => new external_value(PARAM_TEXT, 'Formato do curso'),
+                'numsections' => new external_value(PARAM_INT, 'Quantidade de sections')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function create_course_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do curso criado'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do curso criado'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -134,7 +132,7 @@ class course extends base {
         global $CFG, $DB;
 
         // Valida os parametros.
-        self::validate_parameters(self::update_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::update_course_parameters(), ['course' => $course]);
 
         // Inclui a biblioteca de cursos do moodle.
         require_once("{$CFG->dirroot}/course/lib.php");
@@ -150,7 +148,7 @@ class course extends base {
             $transaction = $DB->start_delegated_transaction();
 
             // Busca o id do curso apartir do trm_id da turma.
-            $courseid = self::get_course_by_trm_id($course->trm_id);
+            $courseid = \local_integracao\entity\course::get_course_by_trm_id($course->trm_id);
 
             // Se nao existir curso mapeado para a turma dispara uma excessao.
             if (!$courseid) {
@@ -181,30 +179,24 @@ class course extends base {
      * @return external_function_parameters
      */
     public static function update_course_parameters() {
-        return new external_function_parameters(
-            array(
-                'course' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
-                        'shortname' => new external_value(PARAM_TEXT, 'Nome curto do curso'),
-                        'fullname' => new external_value(PARAM_TEXT, 'Nome completo do curso')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'course' => new external_single_structure([
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor'),
+                'shortname' => new external_value(PARAM_TEXT, 'Nome curto do curso'),
+                'fullname' => new external_value(PARAM_TEXT, 'Nome completo do curso')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function update_course_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -219,7 +211,7 @@ class course extends base {
         global $CFG, $DB;
 
         // Valida os parametros.
-        self::validate_parameters(self::remove_course_parameters(), array('course' => $course));
+        self::validate_parameters(self::remove_course_parameters(), ['course' => $course]);
 
         // Inclui a biblioteca de cursos do moodle.
         require_once("{$CFG->dirroot}/lib/moodlelib.php");
@@ -228,7 +220,7 @@ class course extends base {
         $course = (object)$course;
 
         // Busca o id do curso apartir do trm_id da turma.
-        $courseid = self::get_course_by_trm_id($course->trm_id);
+        $courseid = \local_integracao\entity\course::get_course_by_trm_id($course->trm_id);
 
         // Se nao existir curso mapeado para a turma dispara uma excessao.
         if (!$courseid) {
@@ -247,7 +239,7 @@ class course extends base {
             delete_course($courseid, false);
 
             // Deleta os registros da tabela de controle.
-            $DB->delete_records('int_turma_course', array('courseid' => $courseid));
+            $DB->delete_records('int_turma_course', ['courseid' => $courseid]);
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
@@ -268,28 +260,22 @@ class course extends base {
      * @return external_function_parameters
      */
     public static function remove_course_parameters() {
-        return new external_function_parameters(
-            array(
-                'course' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'course' => new external_single_structure([
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function remove_course_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -300,7 +286,7 @@ class course extends base {
      */
     protected static function get_create_course_validation_rules($course) {
         // Verifica se a turma já está mapeada para algum curso do ambiente.
-        $courseid = self::get_course_by_trm_id($course->trm_id);
+        $courseid = \local_integracao\entity\course::get_course_by_trm_id($course->trm_id);
 
         // Dispara uma excessao se essa turma ja estiver mapeada para um curso.
         if ($courseid) {
