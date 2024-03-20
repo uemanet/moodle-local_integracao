@@ -25,16 +25,16 @@ use core\context\course as context_course;
  * @copyright 2017 UemaNet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_integracao_helper {
+class helper {
 
-    public static $lookupeventswithoutredirecttime = array(
+    public static $lookupeventswithoutredirecttime = [
         '\mod_assign\event\submission_status_viewed',
         '\mod_assign\event\submission_form_viewed',
         '\mod_resource\event\course_module_viewed',
         '\mod_forum\event\course_module_viewed',
-    );
+    ];
 
-    public static $lookupevents = array(
+    public static $lookupevents = [
         '\mod_page\event\course_module_viewed',
         '\mod_folder\event\course_module_viewed',
         '\mod_quiz\event\course_module_viewed',
@@ -42,7 +42,7 @@ class local_integracao_helper {
         '\mod_forum\event\discussion_viewed',
         '\mod_quiz\event\attempt_viewed',
         '\core\event\course_viewed'
-    );
+    ];
 
     /**
      * Observe the events, and dispatch them if necessary.
@@ -117,7 +117,7 @@ class local_integracao_helper {
         }
 
         if ($isstudent) {
-            $manager = local_integracao_manager::get($event->courseid);
+            $manager = manager::get($event->courseid);
             $manager->capture_event($event);
         }
     }

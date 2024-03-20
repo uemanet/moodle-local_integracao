@@ -17,6 +17,7 @@
 namespace local_integracao;
 
 use moodle_url;
+use coding_exception;
 
 /**
  * Integracao Web Service - manager
@@ -25,7 +26,7 @@ use moodle_url;
  * @copyright 2017 UemaNet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_integracao_manager {
+class manager {
 
     /** @var array Array of singletons. */
     protected static $instances;
@@ -44,8 +45,10 @@ class local_integracao_manager {
      */
     protected function __construct($courseid) {
         global $DB;
+
         $this->courseid = $courseid;
-        $this->course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+
+        $this->course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
     }
 
     /**
@@ -58,7 +61,7 @@ class local_integracao_manager {
      * @throws moodle_exception
      */
     public function capture_event(\core\event\base $event) {
-        global $DB, $CFG;
+        global $DB;
 
         $redirecttime = 0;
         if ($event->courseid !== $this->courseid) {
@@ -66,7 +69,7 @@ class local_integracao_manager {
         }
 
         // The capture has not been enabled yet.
-        if (!$this->is_enabled($event->userid)) {
+        if (!$this->is_enabled()) {
             return;
         }
 
@@ -91,8 +94,9 @@ class local_integracao_manager {
             if ($section) {
                 return;
             }
-            redirect(new moodle_url('/course/view.php',
-                array('id' => $this->courseid)), 'Você não esta matriculado nesta disciplina.', $redirecttime);
+            redirect(new moodle_url('/course/view.php', ['id' => $this->courseid]),
+                'Você não esta matriculado nesta disciplina.',
+                $redirecttime);
         }
 
         // Verifica se a atividade esta em uma section mapeada.
@@ -108,15 +112,16 @@ class local_integracao_manager {
         }
 
         // Verifica se o aluno esta matriculado na disciplina.
-        $countparams = array('sectionid' => $section->sectionid, 'userid' => $event->userid);
+        $countparams = ['sectionid' => $section->sectionid, 'userid' => $event->userid];
         $isenrolled = $DB->count_records('int_user_discipline', $countparams);
 
         if (!$isenrolled) {
-            if (!in_array($event->eventname, local_integracao_helper::$lookupeventswithoutredirecttime)) {
+            if (!in_array($event->eventname, helper::$lookupeventswithoutredirecttime)) {
                 $redirecttime = 5;
             }
-            redirect(new moodle_url('/course/view.php',
-                array('id' => $this->courseid)), 'Você não esta matriculado na disciplina desta atividade.', $redirecttime);
+            redirect(new moodle_url('/course/view.php', ['id' => $this->courseid]),
+                'Você não esta matriculado na disciplina desta atividade.',
+                $redirecttime);
         }
     }
 
@@ -130,7 +135,7 @@ class local_integracao_manager {
      */
     public static function get($courseid, $forcereload = false) {
         if ($forcereload || !isset(self::$instances[$courseid])) {
-            self::$instances[$courseid] = new local_integracao_manager($courseid);
+            self::$instances[$courseid] = new manager($courseid);
         }
 
         return self::$instances[$courseid];
@@ -151,10 +156,10 @@ class local_integracao_manager {
      * @return boolean True if enabled.
      * @throws dml_exception
      */
-    public function is_enabled($userid) {
+    public function is_enabled() {
         global $DB;
 
-        $isintegrado = $DB->count_records('int_turma_course', array('courseid' => $this->get_courseid()));
+        $isintegrado = $DB->count_records('int_turma_course', ['courseid' => $this->get_courseid()]);
         if ($isintegrado) {
             return true;
         }

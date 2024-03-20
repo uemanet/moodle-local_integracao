@@ -14,13 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_multiple_structure;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_discipline
@@ -28,7 +33,7 @@ use core_external\external_multiple_structure;
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_enrol extends wsintegracao_base {
+class enrol extends external_api {
 
     /**
      * @param $batch
@@ -46,65 +51,60 @@ class local_wsintegracao_enrol extends wsintegracao_base {
         try {
             foreach ($batch as $enrol) {
                 // Validação dos parametros.
-                self::validate_parameters(self::unenrol_student_discipline_parameters(), array('enrol' => $enrol));
+                self::validate_parameters(self::unenrol_student_discipline_parameters(), ['enrol' => $enrol]);
 
                 $enrol = (object)$enrol;
 
                 // Verifica se o aluno ja esta matriculado para a disciplina.
-                $params = array('mof_id' => $enrol->mof_id);
+                $params = ['mof_id' => $enrol->mof_id];
                 $userdiscipline = $DB->get_record('int_user_discipline', $params, '*');
 
                 if (!$userdiscipline) {
                     throw new \Exception("A matrícula em disciplina com mof_id: ".$enrol->mof_id ." não está mapeada com o ambiente virtual");
                 }
 
-                $returndata = null;
-                $res = $DB->delete_records('int_user_discipline', ['mof_id' => $enrol->mof_id]);
+                $DB->delete_records('int_user_discipline', ['mof_id' => $enrol->mof_id]);
             }
 
             // Persiste todas as matriculas em caso de sucesso.
             $transaction->allow_commit();
 
-            $returndata = array(
+            return [
                 'id' => $enrol->mof_id,
                 'status' => 'success',
                 'message' => 'Alunos desmatriculados em lote com sucesso'
-            );
+            ];
         } catch (\Exception $exception) {
             $transaction->rollback($exception);
         }
 
-        return $returndata;
+        return null;
     }
 
     /**
      * @return external_function_parameters
      */
     public static function batch_unenrol_student_discipline_parameters() {
-        $innerstructure = new external_single_structure(
-            array(
-                'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia')
-            )
-        );
+        $innerstructure =
 
-        return new external_function_parameters(
-            array(
-                'enrol' => new external_multiple_structure($innerstructure)
+        return new external_function_parameters([
+            'enrol' => new external_multiple_structure(
+                new external_single_structure([
+                    'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia')
+                ])
             )
-        );
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function batch_unenrol_student_discipline_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id da matrícula na disciplina'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id da matrícula na disciplina'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -120,69 +120,60 @@ class local_wsintegracao_enrol extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos parametros.
-        self::validate_parameters(self::unenrol_student_discipline_parameters(), array('enrol' => $enrol));
+        self::validate_parameters(self::unenrol_student_discipline_parameters(), ['enrol' => $enrol]);
 
         $enrol = (object)$enrol;
 
         // Verifica se o aluno ja esta matriculado para a disciplina.
-        $params = array('mof_id' => $enrol->mof_id);
+        $params = ['mof_id' => $enrol->mof_id];
 
-        $userdiscipline = $DB->get_record('int_user_discipline', $params, '*');
+        $userdiscipline = $DB->get_record('int_user_discipline', $params);
 
         if (!$userdiscipline) {
             throw new \Exception("A matrícula em disciplina com mof_id: ".$enrol->mof_id ." não está mapeada com o ambiente virtual");
         }
 
-        $returndata = null;
-
         // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
         $transaction = $DB->start_delegated_transaction();
 
         try {
-
-            $res = $DB->delete_records('int_user_discipline',['mof_id' => $enrol->mof_id]);
+            $DB->delete_records('int_user_discipline', ['mof_id' => $enrol->mof_id]);
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
 
-            $returndata = array(
+            return [
                 'id' => $enrol->mof_id,
                 'status' => 'success',
                 'message' => 'Aluno desmatriculado da disciplina'
-            );
+            ];
 
         } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
-        return $returndata;
+        return null;
     }
 
     /**
      * @return external_single_structure
      */
     public static function unenrol_student_discipline_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id da matrícula na disciplina'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id da matrícula na disciplina'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
      * @return external_function_parameters
      */
     public static function unenrol_student_discipline_parameters() {
-        return new external_function_parameters(
-            array(
-                'enrol' => new external_single_structure(
-                    array(
-                        'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'enrol' => new external_single_structure([
+                'mof_id' => new external_value(PARAM_INT, 'Id da matricula na oferta de disciplina no Harpia')
+            ])
+        ]);
     }
 }

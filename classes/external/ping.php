@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
 use core_external\external_api;
 use core_external\external_function_parameters;
@@ -25,7 +25,7 @@ use core_external\external_value;
  * @copyright 2017 Uemanet
  * @author Uemanet
  */
-class local_wsintegracao_ping extends external_api {
+class ping extends external_api {
 
     /**
      * @return external_function_parameters
@@ -38,15 +38,15 @@ class local_wsintegracao_ping extends external_api {
      * @return array
      */
     public static function ping() {
-        return array('response' => true);
+        return ['response' => true];
     }
 
     /**
      * @return external_function_parameters
      */
     public static function ping_returns() {
-        return new external_function_parameters(array(
+        return new external_function_parameters([
             'response' => new external_value(PARAM_BOOL, 'Default response')
-        ));
+        ]);
     }
 }

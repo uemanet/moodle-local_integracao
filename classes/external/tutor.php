@@ -14,12 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_course
@@ -27,7 +32,7 @@ use core_external\external_function_parameters;
  * @copyright   2018 Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_tutor extends wsintegracao_base {
+class tutor extends external_api {
 
     /**
      * @param $tutor
@@ -39,7 +44,7 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::enrol_tutor_parameters(), array('tutor' => $tutor));
+        self::validate_parameters(self::enrol_tutor_parameters(), ['tutor' => $tutor]);
 
         // Transforma o array em objeto.
         $tutor = (object)$tutor;
@@ -54,16 +59,16 @@ class local_wsintegracao_tutor extends wsintegracao_base {
             $data = self::get_enrol_tutor_group_validation_rules($tutor);
 
             // Recebe o valor de courseid, tendo groupid como parâmetro.
-            $courseid = self::get_courseid_by_groupid($data['groupid']);
+            $courseid = \local_integracao\entity\course::get_courseid_by_groupid($data['groupid']);
 
             // Vincula o tutor a um curso no moodle.
             $tutorpresencialrole = get_config('local_integracao')->tutor_presencial;
             $tutordistanciarole = get_config('local_integracao')->tutor_distancia;
 
             if ($tutor->ttg_tipo_tutoria == "presencial") {
-                self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutorpresencialrole);
+                \local_integracao\entity\enrol::enrol_user_in_moodle_course($data['userid'], $courseid, $tutorpresencialrole);
             } else {
-                self::enrol_user_in_moodle_course($data['userid'], $courseid, $tutordistanciarole);
+                \local_integracao\entity\enrol::enrol_user_in_moodle_course($data['userid'], $courseid, $tutordistanciarole);
             }
 
             // Adiciona a bibliteca de grupos do moodle.
@@ -105,36 +110,30 @@ class local_wsintegracao_tutor extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function enrol_tutor_parameters() {
-        return new external_function_parameters(
-            array(
-                'tutor' => new external_single_structure(
-                    array(
-                        'ttg_tipo_tutoria' => new external_value(PARAM_TEXT, 'Tipo de tutoria do tutor'),
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do tutor'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do tutor'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do tutor'),
-                        'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do tutor'),
-                        'password' => new external_value(PARAM_TEXT, 'Senha do tutor'),
-                        'city' => new external_value(PARAM_TEXT, 'Cidade do tutor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'tutor' => new external_single_structure([
+                'ttg_tipo_tutoria' => new external_value(PARAM_TEXT, 'Tipo de tutoria do tutor'),
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do tutor'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do tutor'),
+                'email' => new external_value(PARAM_TEXT, 'Email do tutor'),
+                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do tutor'),
+                'password' => new external_value(PARAM_TEXT, 'Senha do tutor'),
+                'city' => new external_value(PARAM_TEXT, 'Cidade do tutor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function enrol_tutor_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -145,10 +144,10 @@ class local_wsintegracao_tutor extends wsintegracao_base {
      * @throws moodle_exception
      */
     public static function get_enrol_tutor_group_validation_rules($tutor) {
-        global $CFG, $DB;
+        global $DB;
 
         // Verifica se o grupo existe.
-        $groupid = self::get_group_by_grp_id($tutor->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($tutor->grp_id);
 
         // Dispara uma excessao caso o grupo com grp_id informado não exista.
         if (!$groupid) {
@@ -156,11 +155,11 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         }
 
         // Verifica se o o usuário enviado pelo harpia, existe no moodle.
-        $userid = self::get_user_by_pes_id($tutor->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($tutor->pes_id);
 
         // Se ele não existir, criar o usuário e adicioná-lo na tabela de controle.
         if (!$userid) {
-            $userid = self::save_user($tutor);
+            $userid = \local_integracao\entity\user::save($tutor);
 
             $data['pes_id'] = $tutor->pes_id;
             $data['userid'] = $userid;
@@ -169,7 +168,7 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         }
 
         // Verifica se o tutor pode ser vinculado ao grupo.
-        $tutorgroup = $DB->get_record('int_tutor_group', array('pes_id' => $tutor->pes_id, 'groupid' => $groupid), '*');
+        $tutorgroup = $DB->get_record('int_tutor_group', ['pes_id' => $tutor->pes_id, 'groupid' => $groupid]);
 
         if ($tutorgroup) {
             throw new \Exception("O tutor de pes_id " . $tutor->pes_id . " já está vinculado ao grupo de groupid " . $groupid);
@@ -195,12 +194,12 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::unenrol_tutor_group_parameters(), array('tutor' => $tutor));
+        self::validate_parameters(self::unenrol_tutor_group_parameters(), ['tutor' => $tutor]);
 
         $tutor = (object) $tutor;
 
         // Verifica se o o usuário enviado pelo harpia, existe no moodle.
-        $userid = self::get_user_by_pes_id($tutor->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($tutor->pes_id);
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
         if (!$userid) {
@@ -208,7 +207,7 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         }
 
         // Verifica se o o usuário enviado pelo harpia, existe no moodle.
-        $groupid = self::get_group_by_grp_id($tutor->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($tutor->grp_id);
 
         // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle.
         if (!$groupid) {
@@ -216,10 +215,10 @@ class local_wsintegracao_tutor extends wsintegracao_base {
         }
 
         // Recebe o valor do id do curso com o id do grupo.
-        $courseid = self::get_courseid_by_groupid($groupid);
+        $courseid = \local_integracao\entity\course::get_courseid_by_groupid($groupid);
 
         // Verifica se o tutor está realmente vinculado ao grupo.
-        $tutorgroup = $DB->get_record('int_tutor_group', array('groupid' => $groupid, 'pes_id' => $tutor->pes_id), '*');
+        $tutorgroup = $DB->get_record('int_tutor_group', ['groupid' => $groupid, 'pes_id' => $tutor->pes_id]);
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
         if (!$tutorgroup) {
@@ -240,14 +239,14 @@ class local_wsintegracao_tutor extends wsintegracao_base {
             groups_remove_member($groupid, $userid);
 
             // Deleta o registro da tabela de controle.
-            $DB->delete_records('int_tutor_group', array('groupid' => $groupid, 'pes_id' => $tutor->pes_id));
+            $DB->delete_records('int_tutor_group', ['groupid' => $groupid, 'pes_id' => $tutor->pes_id]);
 
             // Verifica se o tutor ainda está vinculado ao curso.
             // Para isso, faz-se a pesquisa depois de deletar o registro.
-            $tutorcourse = $DB->get_record('int_tutor_group', array('courseid' => $courseid, 'pes_id' => $tutor->pes_id), '*');
+            $tutorcourse = $DB->get_record('int_tutor_group', ['courseid' => $courseid, 'pes_id' => $tutor->pes_id]);
 
             if (!$tutorcourse) {
-                self::unenrol_user_in_moodle_course($userid, $courseid);
+                \local_integracao\entity\enrol::unenrol_user_in_moodle_course($userid, $courseid);
             }
 
             // Persiste as operacoes em caso de sucesso.
@@ -269,28 +268,22 @@ class local_wsintegracao_tutor extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function unenrol_tutor_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'tutor' => new external_single_structure(
-                    array(
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'tutor' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function unenrol_tutor_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 }

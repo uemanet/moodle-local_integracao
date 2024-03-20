@@ -14,19 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
 
 /**
  * Class local_wsintegracao_professor
  * @copyright 2017 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_professor extends wsintegracao_base {
+class professor extends external_api {
 
     /**
      * @param $discipline
@@ -40,21 +44,21 @@ class local_wsintegracao_professor extends wsintegracao_base {
         global $DB;
 
         // Validação dos parametros.
-        self::validate_parameters(self::change_teacher_parameters(), array('discipline' => $discipline));
+        self::validate_parameters(self::change_teacher_parameters(), ['discipline' => $discipline]);
 
         // Transforma o array em objeto.
         $discipline['pes_id'] = $discipline['teacher']['pes_id'];
         $discipline = (object)$discipline;
 
         // Busca o objeto da section.
-        $sectionoferta = self::get_section_by_ofd_id($discipline->ofd_id);
+        $sectionoferta = \local_integracao\entity\section::get_section_by_ofd_id($discipline->ofd_id);
 
         if (!$sectionoferta) {
             throw new Exception('A oferta de disciplina com ofd_id: ' . $discipline->ofd_id . 'não está vinculada ao moodle');
         }
 
         // Busca informações da section no moodle.
-        $section = $DB->get_record('course_sections', array('id' => $sectionoferta->sectionid), '*');
+        $section = $DB->get_record('course_sections', ['id' => $sectionoferta->sectionid]);
 
         try {
             $transaction = $DB->start_delegated_transaction();
@@ -62,11 +66,11 @@ class local_wsintegracao_professor extends wsintegracao_base {
             // O trecho abaixo é para cadastrar um novo usuário, caso o professor em questão não esteja no moodle
             // Verifica se existe um usuário no moodle com esse Id no lado do harpia.
 
-            $userid = self::get_user_by_pes_id($discipline->pes_id);
+            $userid = \local_integracao\entity\user::get_user_by_pes_id($discipline->pes_id);
 
             // Caso não exista usuario, cria-se um novo usuário.
             if (!$userid) {
-                $userid = self::save_user((object)$discipline->teacher);
+                $userid = \local_integracao\entity\user::save((object)$discipline->teacher);
                 $data['pes_id'] = $discipline->pes_id;
                 $data['userid'] = $userid;
                 $res = $DB->insert_record('int_pessoa_user', $data);
@@ -76,12 +80,12 @@ class local_wsintegracao_professor extends wsintegracao_base {
             $newteacher = $discipline->pes_id;
 
             // Verifica se o novo professor já está vinculado ao curso dessa disciplina.
-            $vinculado = self::verify_teacher_enroled_course_section($newteacher, $sectionoferta->sectionid);
+            $vinculado = \local_integracao\entity\enrol::verify_teacher_enroled_course_section($newteacher, $sectionoferta->sectionid);
 
             if (!$vinculado) {
                 // Atribui o professor ao curso.
                 $teacherrole = get_config('local_integracao')->professor;
-                self::enrol_user_in_moodle_course($userid, $section->course, $teacherrole);
+                \local_integracao\entity\enrol::enrol_user_in_moodle_course($userid, $section->course, $teacherrole);
             }
 
             $sectionoferta->pes_id = $newteacher;
@@ -89,14 +93,13 @@ class local_wsintegracao_professor extends wsintegracao_base {
             // Atualiza o novo registro para o professor novo.
 
             // Verifica se o antigo professor está vinculado a mais alguma outra disciplina do curso.
-            $vinculado = self::verify_teacher_enroled_course_section($oldteacher, $sectionoferta->sectionid);
-            $sectionoferta = self::get_section_by_ofd_id($discipline->ofd_id);
+            $vinculado = \local_integracao\entity\enrol::verify_teacher_enroled_course_section($oldteacher, $sectionoferta->sectionid);
 
             if (!$vinculado) {
                 // Atribui o professor ao curso.
-                $olduserid = self::get_user_by_pes_id($oldteacher);
-                self::unenrol_user_in_moodle_course($olduserid, $section->course);
+                $olduserid = \local_integracao\entity\user::get_user_by_pes_id($oldteacher);
 
+                \local_integracao\entity\enrol::unenrol_user_in_moodle_course($olduserid, $section->course);
             }
 
             // Persiste as operacoes em caso de sucesso.
@@ -105,10 +108,10 @@ class local_wsintegracao_professor extends wsintegracao_base {
             $transaction->rollback($e);
         }
 
-        // TODO check $result var.
-        $returndata['id'] = $result->ofd_id;
+        $returndata['id'] = $discipline->ofd_id;
         $returndata['status'] = 'success';
         $returndata['message'] = 'Disciplina atualizada com sucesso';
+
         return $returndata;
 
     }
@@ -117,38 +120,30 @@ class local_wsintegracao_professor extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function change_teacher_parameters() {
-        return new external_function_parameters(
-            array(
-                'discipline' => new external_single_structure(
-                    array(
-                        'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor'),
-                        'teacher' => new external_single_structure(
-                            array(
-                                'pes_id' => new external_value(PARAM_INT, 'Id de pessoa vinculado ao professor no gestor'),
-                                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do professor'),
-                                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do professor'),
-                                'email' => new external_value(PARAM_TEXT, 'Email do professor'),
-                                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do professor'),
-                                'password' => new external_value(PARAM_TEXT, 'Senha do professor'),
-                                'city' => new external_value(PARAM_TEXT, 'Cidade do tutor')
-                            )
-                        )
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'discipline' => new external_single_structure([
+                'ofd_id' => new external_value(PARAM_INT, 'Id da oferta de disciplina no gestor'),
+                'teacher' => new external_single_structure([
+                    'pes_id' => new external_value(PARAM_INT, 'Id de pessoa vinculado ao professor no gestor'),
+                    'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do professor'),
+                    'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do professor'),
+                    'email' => new external_value(PARAM_TEXT, 'Email do professor'),
+                    'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do professor'),
+                    'password' => new external_value(PARAM_TEXT, 'Senha do professor'),
+                    'city' => new external_value(PARAM_TEXT, 'Cidade do tutor')
+                ])
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function change_teacher_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id da disciplina criada'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id da disciplina criada'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 }

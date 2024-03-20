@@ -14,21 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use core\context\course as context_course;
 use coding_exception;
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core\context\course as context_course;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use dml_exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_student
  * @copyright 2017 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_student extends wsintegracao_base {
+class student extends external_api {
 
     /**
      * @param $student
@@ -40,7 +45,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::enrol_student_parameters(), array('student' => $student));
+        self::validate_parameters(self::enrol_student_parameters(), ['student' => $student]);
 
         $student = (object)$student;
 
@@ -55,7 +60,7 @@ class local_wsintegracao_student extends wsintegracao_base {
 
             // Matricula o aluno em um curso no moodle.
             $studentrole = get_config('local_integracao')->aluno;
-            self::enrol_user_in_moodle_course($data['userid'], $data['courseid'], $studentrole);
+            \local_integracao\entity\enrol::enrol_user_in_moodle_course($data['userid'], $data['courseid'], $studentrole);
 
             if ($data['groupid']) {
 
@@ -76,11 +81,11 @@ class local_wsintegracao_student extends wsintegracao_base {
             $studentcourse['groupid'] = $data['groupid'];
 
             // Insere os dados na tabela de controle.
-            $result = $DB->insert_record('int_student_course', $studentcourse);
+            $result = $DB->insert_record('int_student_course', $studentcourse, true);
 
             // Prepara o array de retorno.
             if ($result) {
-                $returndata['id'] = $result->id;
+                $returndata['id'] = $result;
                 $returndata['status'] = 'success';
                 $returndata['message'] = 'Aluno matriculado com sucesso';
             } else {
@@ -102,37 +107,31 @@ class local_wsintegracao_student extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function enrol_student_parameters() {
-        return new external_function_parameters(
-            array(
-                'student' => new external_single_structure(
-                    array(
-                        'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no harpia'),
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no harpia'),
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor', VALUE_DEFAULT, null),
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
-                        'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do student'),
-                        'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do student'),
-                        'email' => new external_value(PARAM_TEXT, 'Email do student'),
-                        'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do student'),
-                        'password' => new external_value(PARAM_TEXT, 'Senha do student'),
-                        'city' => new external_value(PARAM_TEXT, 'Cidade do student')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'student' => new external_single_structure([
+                'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no harpia'),
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no harpia'),
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor', VALUE_DEFAULT, null),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                'firstname' => new external_value(PARAM_TEXT, 'Primeiro nome do student'),
+                'lastname' => new external_value(PARAM_TEXT, 'Ultimo nome do student'),
+                'email' => new external_value(PARAM_TEXT, 'Email do student'),
+                'username' => new external_value(PARAM_TEXT, 'Usuario de acesso do student'),
+                'password' => new external_value(PARAM_TEXT, 'Senha do student'),
+                'city' => new external_value(PARAM_TEXT, 'Cidade do student')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function enrol_student_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -145,7 +144,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::unenrol_student_parameters(), array('student' => $student));
+        self::validate_parameters(self::unenrol_student_parameters(), ['student' => $student]);
 
         $student = (object)$student;
 
@@ -156,14 +155,14 @@ class local_wsintegracao_student extends wsintegracao_base {
             $transaction = $DB->start_delegated_transaction();
 
             // Verifica se o aluno ja esta matriculado para a disciplina.
-            $params = array('mat_id' => $student->mat_id);
+            $params = ['mat_id' => $student->mat_id];
             $usercourse = $DB->get_record('int_student_course', $params, '*');
 
             if (!$usercourse) {
                 throw new \Exception("A matrícula com mat_id: ".$enrol->mat_id ." não está mapeada com o ambiente virtual");
             }
 
-            self::unenrol_user_in_moodle_course($usercourse->userid, $usercourse->courseid);
+            \local_integracao\entity\enrol::unenrol_user_in_moodle_course($usercourse->userid, $usercourse->courseid);
 
             //Remove o registro da tabela de mapeamento
             $DB->delete_records('int_student_course', ['mat_id' => $student->mat_id]);
@@ -186,28 +185,22 @@ class local_wsintegracao_student extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function unenrol_student_parameters() {
-        return new external_function_parameters(
-            array(
-                'student' => new external_single_structure(
-                    array(
-                        'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no harpia')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'student' => new external_single_structure([
+                'mat_id' => new external_value(PARAM_INT, 'Id da matricula do aluno no harpia')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function unenrol_student_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -224,28 +217,28 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $DB;
 
         // Validação dos parâmetros.
-        self::validate_parameters(self::change_role_student_course_parameters(), array('student' => $student));
+        self::validate_parameters(self::change_role_student_course_parameters(), ['student' => $student]);
 
         $student = (object)$student;
 
         // Verifica se o aluno existe no moodle.
-        $userid = self::get_user_by_pes_id($student->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($student->pes_id);
 
         if (!$userid) {
             throw new \Exception("Não existe um aluno cadastrado no moodle com pes_id:" . $student->pes_id);
         }
 
         // Verifica se existe um curso mapeado no moodle com a turma do aluno.
-        $courseid = self::get_course_by_trm_id($student->trm_id);
+        $courseid = \local_integracao\entity\course::get_course_by_trm_id($student->trm_id);
 
         if (!$courseid) {
             throw new \Exception("Não existe uma turma mapeada no moodle com trm_id:" . $student->trm_id);
         }
 
-        $instance = self::get_course_enrol($courseid);
+        $courseenrol = \local_integracao\entity\enrol::get_manual_enrol_method_by_course($courseid);
 
         // Verifica se o aluno está matriculado no curso.
-        $isenrolled = $DB->get_record('user_enrolments', array('enrolid' => $instance->id, 'userid' => $userid));
+        $isenrolled = $DB->get_record('user_enrolments', ['enrolid' => $courseenrol->id, 'userid' => $userid]);
 
         if (!$isenrolled) {
             $message = 'Usuario não matriculado na turma. trm_id: ' . $student->trm_id . ', pes_id: ' . $student->pes_id;
@@ -279,7 +272,7 @@ class local_wsintegracao_student extends wsintegracao_base {
             }
 
             // Pega a instancia de mdl_role_assignments de acordo com o usuario e o contexto do curso.
-            $roleassignment = $DB->get_record('role_assignments', array('userid' => $userid, 'contextid' => $context->id));
+            $roleassignment = $DB->get_record('role_assignments', ['userid' => $userid, 'contextid' => $context->id]);
 
             if ($roleassignment) {
                 // Atualiza a role do aluno.
@@ -288,22 +281,22 @@ class local_wsintegracao_student extends wsintegracao_base {
 
                 $transaction->allow_commit();
 
-                return array(
+                return [
                     'id' => $roleassignment->id,
                     'status' => 'success',
                     'message' => 'Status da Matricula alterado com sucesso'
-                );
+                ];
             }
 
         } catch (\Exception $e) {
             $transaction->rollback($e);
         }
 
-        return array(
+        return [
             'id' => $userid,
             'status' => 'error',
             'message' => 'Usuario não possui papel atribuido no curso'
-        );
+        ];
 
     }
 
@@ -311,30 +304,24 @@ class local_wsintegracao_student extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function change_role_student_course_parameters() {
-        return new external_function_parameters(
-            array(
-                'student' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no gestor'),
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
-                        'new_status' => new external_value(PARAM_TEXT, 'Novo status da matricula do aluno no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'student' => new external_single_structure([
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma do aluno no gestor'),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                'new_status' => new external_value(PARAM_TEXT, 'Novo status da matricula do aluno no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function change_role_student_course_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -348,14 +335,14 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $DB;
 
         // Verifica se existe um curso mapeado no moodle com a turma enviada pelo harpia.
-        $courseid = self::get_course_by_trm_id($student->trm_id);
+        $courseid = \local_integracao\entity\course::get_course_by_trm_id($student->trm_id);
 
         if (!$courseid) {
             throw new \Exception("Não existe uma turma mapeada no moodle com trm_id:" . $student->trm_id);
         }
 
         // Verifica se a matricula passada pelo harpia já está mapeada com o moodle.
-        $matricula = $DB->get_record('int_student_course', array('mat_id' => $student->mat_id), '*');
+        $matricula = $DB->get_record('int_student_course', ['mat_id' => $student->mat_id]);
 
         if ($matricula) {
             $message = "A matricula de mat_id: " . $student->mat_id;
@@ -368,7 +355,7 @@ class local_wsintegracao_student extends wsintegracao_base {
 
         if ($student->grp_id) {
 
-            $groupid = self::get_group_by_grp_id($student->grp_id);
+            $groupid = \local_integracao\entity\group::get_group_by_grp_id($student->grp_id);
 
             // Dispara uma excessao caso o grupo com grp_id informado não exista.
             if (!$groupid) {
@@ -380,12 +367,12 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o o usuário enviado pelo harpia, existe no moodle.
-        $userid = self::get_user_by_pes_id($student->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($student->pes_id);
 
         // Se ele não existir, criar o usuário e adicioná-lo na tabela de controle.
         if (!$userid) {
 
-            $userid = self::save_user($student);
+            $userid = \local_integracao\entity\user::save($student);
 
             $data['pes_id'] = $student->pes_id;
             $data['userid'] = $userid;
@@ -394,7 +381,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o aluno ja está matriculado no curso.
-        $studentcourse = $DB->get_record('int_student_course', array('pes_id' => $student->pes_id, 'courseid' => $courseid), '*');
+        $studentcourse = $DB->get_record('int_student_course', ['pes_id' => $student->pes_id, 'courseid' => $courseid]);
 
         if ($studentcourse) {
             $message = "O aluno de pes_id " . $student->pes_id . " já está vinculado ao curso de courseid " . $courseid;
@@ -421,13 +408,13 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::change_student_group_parameters(), array('student' => $student));
+        self::validate_parameters(self::change_student_group_parameters(), ['student' => $student]);
 
         // Transforma o array em objeto.
         $student = (object)$student;
 
         // Verifica se o usuário enviado pelo harpia, existe no moodle.
-        $userid = self::get_user_by_pes_id($student->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($student->pes_id);
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
         if (!$userid) {
@@ -437,7 +424,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         $oldgroupid = null;
         if ($student->old_grp_id) {
             // Verifica se o grupo enviado pelo harpia, existe no moodle.
-            $oldgroupid = self::get_group_by_grp_id($student->old_grp_id);
+            $oldgroupid = \local_integracao\entity\group::get_group_by_grp_id($student->old_grp_id);
 
             // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle.
             if (!$oldgroupid) {
@@ -446,7 +433,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o aluno está realmente vinculado a esse grupo enviado pelo harpia.
-        $queryparams = array('mat_id' => $student->mat_id, 'groupid' => $oldgroupid, 'pes_id' => $student->pes_id);
+        $queryparams = ['mat_id' => $student->mat_id, 'groupid' => $oldgroupid, 'pes_id' => $student->pes_id];
         $studentgroup = $DB->get_record('int_student_course', $queryparams, '*');
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
@@ -457,7 +444,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o grupo enviado pelo harpia, existe no moodle.
-        $newgroupid = self::get_group_by_grp_id($student->new_grp_id);
+        $newgroupid = \local_integracao\entity\group::get_group_by_grp_id($student->new_grp_id);
 
         // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle.
         if (!$newgroupid) {
@@ -505,31 +492,25 @@ class local_wsintegracao_student extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function change_student_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'student' => new external_single_structure(
-                    array(
-                        'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'old_grp_id' => new external_value(PARAM_INT, 'Id do antigo grupo no gestor', VALUE_DEFAULT, null),
-                        'new_grp_id' => new external_value(PARAM_INT, 'Id do novo grupo no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'student' => new external_single_structure([
+                'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'old_grp_id' => new external_value(PARAM_INT, 'Id do antigo grupo no gestor', VALUE_DEFAULT, null),
+                'new_grp_id' => new external_value(PARAM_INT, 'Id do novo grupo no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function change_student_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -545,13 +526,13 @@ class local_wsintegracao_student extends wsintegracao_base {
         global $CFG, $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::unenrol_student_group_parameters(), array('student' => $student));
+        self::validate_parameters(self::unenrol_student_group_parameters(), ['student' => $student]);
 
         // Transforma o array em objeto.
         $student = (object)$student;
 
         // Verifica se o usuário enviado pelo harpia, existe no moodle.
-        $userid = self::get_user_by_pes_id($student->pes_id);
+        $userid = \local_integracao\entity\user::get_user_by_pes_id($student->pes_id);
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
         if (!$userid) {
@@ -559,7 +540,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o grupo enviado pelo harpia, existe no moodle.
-        $groupid = self::get_group_by_grp_id($student->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($student->grp_id);
 
         // Dispara uma excessao caso o grupo com grp_id enviado pelo gestor não esteja mapeado com o moodle.
         if (!$groupid) {
@@ -567,7 +548,7 @@ class local_wsintegracao_student extends wsintegracao_base {
         }
 
         // Verifica se o aluno está realmente vinculado a esse grupo.
-        $queryparams = array('mat_id' => $student->mat_id, 'groupid' => $groupid, 'pes_id' => $student->pes_id);
+        $queryparams = ['mat_id' => $student->mat_id, 'groupid' => $groupid, 'pes_id' => $student->pes_id];
         $studentgroup = $DB->get_record('int_student_course', $queryparams, '*');
 
         // Dispara uma excessao caso a pessoa com pes_id enviada pelo gestor não esteja mapeada com o moodle.
@@ -611,29 +592,23 @@ class local_wsintegracao_student extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function unenrol_student_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'student' => new external_single_structure(
-                    array(
-                        'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
-                        'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'student' => new external_single_structure([
+                'mat_id' => new external_value(PARAM_INT, 'Id da matrícula da pessoa do gestor'),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function unenrol_student_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 }

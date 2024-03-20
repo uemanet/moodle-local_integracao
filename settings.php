@@ -46,7 +46,7 @@ if ($hassiteconfig) {
 
     $roles = get_all_roles();
 
-    $papeis = array();
+    $papeis = [];
 
     foreach ($roles as $role) {
         $papeis[$role->id] = $role->shortname;

@@ -14,12 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_integracao;
+namespace local_integracao\external;
 
-use Exception;
-use core_external\external_value;
-use core_external\external_single_structure;
+use core_external\external_api;
 use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use Exception;
+use cache_helper;
+use dml_exception;
+use dml_transaction_exception;
+use invalid_parameter_exception;
+use moodle_exception;
 
 /**
  * Class local_wsintegracao_course
@@ -27,13 +33,13 @@ use core_external\external_function_parameters;
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_group extends wsintegracao_base {
+class group extends external_api {
 
     public static function create_group($group) {
-        global $CFG, $DB;
+        global $DB;
 
         // Validação dos paramêtros.
-        self::validate_parameters(self::create_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::create_group_parameters(), ['group' => $group]);
 
         // Transforma o array em objeto.
         $group = (object)$group;
@@ -66,7 +72,7 @@ class local_wsintegracao_group extends wsintegracao_base {
                 $res = $DB->insert_record('int_grupo_group', $data);
 
                 // Busca as configuracoes do curso.
-                $courseoptions = $DB->get_record('course', array('id' => $courseid), '*');
+                $courseoptions = $DB->get_record('course', ['id' => $courseid], '*');
 
                 // Altera o formato de grupos do curso.
                 $courseoptions->groupmode = 1;
@@ -74,7 +80,7 @@ class local_wsintegracao_group extends wsintegracao_base {
                 $DB->update_record('course', $courseoptions);
 
                 // Invalidate the grouping cache for the course.
-                cache_helper::invalidate_by_definition('core', 'groupdata', array(), array($courseid));
+                cache_helper::invalidate_by_definition('core', 'groupdata', [], [$courseid]);
 
                 // Prepara o array de retorno.
                 if ($res) {
@@ -101,31 +107,25 @@ class local_wsintegracao_group extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function create_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'group' => new external_single_structure(
-                    array(
-                        'trm_id' => new external_value(PARAM_INT, 'Id da turma do grupo no gestor'),
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
-                        'name' => new external_value(PARAM_TEXT, 'Nome do grupo'),
-                        'description' => new external_value(PARAM_TEXT, 'Descrição do grupo')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'group' => new external_single_structure([
+                'trm_id' => new external_value(PARAM_INT, 'Id da turma do grupo no gestor'),
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
+                'name' => new external_value(PARAM_TEXT, 'Nome do grupo'),
+                'description' => new external_value(PARAM_TEXT, 'Descrição do grupo')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function create_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do grupo criado'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do grupo criado'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -140,7 +140,7 @@ class local_wsintegracao_group extends wsintegracao_base {
         global $CFG, $DB;
 
         // Valida os parametros.
-        self::validate_parameters(self::update_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::update_group_parameters(), ['group' => $group]);
 
         // Transforma o array em objeto.
         $group = (object)$group;
@@ -148,12 +148,11 @@ class local_wsintegracao_group extends wsintegracao_base {
         // Verifica se o grupo pode ser criado e recebe o id do course do group.
         $groupid = self::get_update_group_validation_rules($group);
 
-        $groupobject = $DB->get_record('groups', array('id' => $groupid), '*');
+        $groupobject = $DB->get_record('groups', ['id' => $groupid]);
 
         $groupobject->name = $group->grp_nome;
 
         try {
-
             // Inicia a transacao, qualquer erro que aconteca o rollback sera executado.
             $transaction = $DB->start_delegated_transaction();
 
@@ -180,29 +179,23 @@ class local_wsintegracao_group extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function update_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'group' => new external_single_structure(
-                    array(
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
-                        'grp_nome' => new external_value(PARAM_TEXT, 'Nome do grupo')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'group' => new external_single_structure([
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor'),
+                'grp_nome' => new external_value(PARAM_TEXT, 'Nome do grupo')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function update_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do curso atualizado'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -217,7 +210,7 @@ class local_wsintegracao_group extends wsintegracao_base {
         global $CFG, $DB;
 
         // Valida os parametros.
-        self::validate_parameters(self::remove_group_parameters(), array('group' => $group));
+        self::validate_parameters(self::remove_group_parameters(), ['group' => $group]);
 
         // Inclui a biblioteca de grupos do moodle.
         require_once("{$CFG->dirroot}/group/lib.php");
@@ -226,7 +219,7 @@ class local_wsintegracao_group extends wsintegracao_base {
         $group = (object)$group;
 
         // Busca o id do curso apartir do trm_id da turma.
-        $groupid = self::get_group_by_grp_id($group->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($group->grp_id);
 
         // Se nao existir curso mapeado para a turma dispara uma exceção.
         if (!$groupid) {
@@ -242,7 +235,7 @@ class local_wsintegracao_group extends wsintegracao_base {
             groups_delete_group($groupid);
 
             // Deleta os registros da tabela de controle.
-            $DB->delete_records('int_grupo_group', array('groupid' => $groupid));
+            $DB->delete_records('int_grupo_group', ['groupid' => $groupid]);
 
             // Persiste as operacoes em caso de sucesso.
             $transaction->allow_commit();
@@ -264,42 +257,22 @@ class local_wsintegracao_group extends wsintegracao_base {
      * @return external_function_parameters
      */
     public static function remove_group_parameters() {
-        return new external_function_parameters(
-            array(
-                'group' => new external_single_structure(
-                    array(
-                        'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
-                    )
-                )
-            )
-        );
+        return new external_function_parameters([
+            'group' => new external_single_structure([
+                'grp_id' => new external_value(PARAM_INT, 'Id do grupo no gestor')
+            ])
+        ]);
     }
 
     /**
      * @return external_single_structure
      */
     public static function remove_group_returns() {
-        return new external_single_structure(
-            array(
-                'id' => new external_value(PARAM_INT, 'Id do grupo removido'),
-                'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
-                'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
-            )
-        );
-    }
-
-    /**
-     * @param $courseid
-     * @param $name
-     * @return mixed
-     * @throws dml_exception
-     */
-    private static function get_group_by_name($courseid, $name) {
-        global $DB;
-
-        $group = $DB->get_record('groups', array('courseid' => $courseid, 'name' => $name), '*');
-
-        return $group;
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id do grupo removido'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
+        ]);
     }
 
     /**
@@ -310,7 +283,7 @@ class local_wsintegracao_group extends wsintegracao_base {
      * @throws moodle_exception
      */
     protected static function get_create_group_validation_rules($group) {
-        $groupid = self::get_group_by_grp_id($group->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($group->grp_id);
 
         // Dispara uma exceção caso ja exista um grupo com esse grp_id.
         if ($groupid) {
@@ -318,14 +291,14 @@ class local_wsintegracao_group extends wsintegracao_base {
         }
 
         // Busca o id do curso apartir do trm_id da turma.
-        $courseid = self::get_course_by_trm_id($group->trm_id);
+        $courseid = \local_integracao\entity\course::get_course_by_trm_id($group->trm_id);
 
         // Se nao existir curso mapeado para a turma dispara uma exceção.
         if (!$courseid) {
             throw new \Exception("Nenhum curso mapeado com a turma com trm_id: " . $group->trm_id);
         }
 
-        $groupbyname = self::get_group_by_name($courseid, $group->name);
+        $groupbyname = \local_integracao\entity\group::get_group_by_name($courseid, $group->name);
 
         // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso.
         if ($groupbyname) {
@@ -343,7 +316,7 @@ class local_wsintegracao_group extends wsintegracao_base {
      * @throws moodle_exception
      */
     protected static function get_update_group_validation_rules($group) {
-        $groupid = self::get_group_by_grp_id($group->grp_id);
+        $groupid = \local_integracao\entity\group::get_group_by_grp_id($group->grp_id);
 
         // Dispara uma exceção caso não exista um grupo com esse grp_id.
         if (!$groupid) {
@@ -351,9 +324,9 @@ class local_wsintegracao_group extends wsintegracao_base {
         }
 
         // Busca o id do curso apartir do trm_id da turma.
-        $courseid = self::get_courseid_by_groupid($groupid);
+        $courseid = \local_integracao\entity\course::get_courseid_by_groupid($groupid);
 
-        $groupbyname = self::get_group_by_name($courseid, $group->name);
+        $groupbyname = \local_integracao\entity\group::get_group_by_name($courseid, $group->name);
 
         // Dispara uma exceção caso ja exista um grupo com o mesmo nome no mesmo curso.
         if ($groupbyname) {
