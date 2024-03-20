@@ -25,7 +25,7 @@ use core\context\course as context_course;
  * @copyright 2017 UemaNet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_integracao_helper {
+class helper {
 
     public static $lookupeventswithoutredirecttime = array(
         '\mod_assign\event\submission_status_viewed',

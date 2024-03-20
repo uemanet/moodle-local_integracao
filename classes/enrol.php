@@ -28,7 +28,7 @@ use core_external\external_multiple_structure;
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_enrol extends wsintegracao_base {
+class enrol extends base {
 
     /**
      * @param $batch

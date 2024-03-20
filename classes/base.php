@@ -26,7 +26,7 @@ use coding_exception;
  * @copyright 2018 Uemanet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class wsintegracao_base extends external_api {
+class base extends external_api {
 
     /**
      * @param $trmid

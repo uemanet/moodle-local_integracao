@@ -28,7 +28,7 @@ use core_external\external_multiple_structure;
  * @author      Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_discipline extends wsintegracao_base {
+class discipline extends base {
 
     /**
      * @param $discipline

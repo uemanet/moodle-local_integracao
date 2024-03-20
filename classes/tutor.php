@@ -27,7 +27,7 @@ use core_external\external_function_parameters;
  * @copyright   2018 Uemanet
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_wsintegracao_tutor extends wsintegracao_base {
+class tutor extends base {
 
     /**
      * @param $tutor

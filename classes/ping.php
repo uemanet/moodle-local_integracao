@@ -25,7 +25,7 @@ use core_external\external_value;
  * @copyright 2017 Uemanet
  * @author Uemanet
  */
-class local_wsintegracao_ping extends external_api {
+class ping extends external_api {
 
     /**
      * @return external_function_parameters

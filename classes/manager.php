@@ -25,7 +25,7 @@ use moodle_url;
  * @copyright 2017 UemaNet
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_integracao_manager {
+class manager {
 
     /** @var array Array of singletons. */
     protected static $instances;
