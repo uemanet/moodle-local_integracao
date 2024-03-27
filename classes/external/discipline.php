@@ -52,6 +52,9 @@ class discipline extends external_api {
 
         $returndata = null;
 
+        // Inicia a transação, qualquer erro que aconteça o rollback será executado.
+        $transaction = $DB->start_delegated_transaction();
+
         try {
 
             // Transforma o array em objeto.
@@ -77,9 +80,6 @@ class discipline extends external_api {
 
             // Pega o numero da ultima section do curso.
             $lastsection = \local_integracao\entity\section::get_last_section_course($courseid);
-
-            // Inicia a transação, qualquer erro que aconteça o rollback será executado.
-            $transaction = $DB->start_delegated_transaction();
 
             // Insere nova section no curso.
             $section['course'] = $courseid;
