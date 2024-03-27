@@ -126,6 +126,12 @@ class discipline extends external_api {
 
         } catch (\Exception $e) {
             $transaction->rollback($e);
+
+            if ($CFG->debug == DEBUG_DEVELOPER) {
+                throw $e;
+            }
+
+            return false;
         }
 
         // Recria o cache do curso.
