@@ -50,33 +50,33 @@ class discipline extends external_api {
         // Validação dos parametros.
         self::validate_parameters(self::create_discipline_parameters(), ['discipline' => $discipline]);
 
-        // Transforma o array em objeto.
-        $discipline['pes_id'] = $discipline['teacher']['pes_id'];
-        $discipline = (object)$discipline;
-
-        // Busca o id da section a partir do id da oferta da disciplina.
-        $sectionid = \local_integracao\entity\section::get_section_by_ofd_id($discipline->ofd_id);
-
-        // Dispara uma exceção caso já tenha um mapeamento entre a oferta da disciplina e uma section.
-        if ($sectionid) {
-            throw new \Exception('Já existe uma section mapeada para essa disciplina oferecida. ofd_id: ' . $discipline->ofd_id);
-        }
-
-        // Busca o id do curso a partir do id da turma.
-        $courseid = \local_integracao\entity\course::get_course_by_trm_id($discipline->trm_id);
-
-        // Dispara uma exceção caso essa turma não esteja mapeada para um curso.
-        if (!$courseid) {
-            $message = 'Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: ' . $discipline->trm_id;
-            throw new \Exception($message);
-        }
-
-        // Pega o numero da ultima section do curso.
-        $lastsection = \local_integracao\entity\section::get_last_section_course($courseid);
-
         $returndata = null;
 
         try {
+
+            // Transforma o array em objeto.
+            $discipline['pes_id'] = $discipline['teacher']['pes_id'];
+            $discipline = (object)$discipline;
+
+            // Busca o id da section a partir do id da oferta da disciplina.
+            $sectionid = \local_integracao\entity\section::get_section_by_ofd_id($discipline->ofd_id);
+
+            // Dispara uma exceção caso já tenha um mapeamento entre a oferta da disciplina e uma section.
+            if ($sectionid) {
+                throw new \Exception('Já existe uma section mapeada para essa disciplina oferecida. ofd_id: ' . $discipline->ofd_id);
+            }
+
+            // Busca o id do curso a partir do id da turma.
+            $courseid = \local_integracao\entity\course::get_course_by_trm_id($discipline->trm_id);
+
+            // Dispara uma exceção caso essa turma não esteja mapeada para um curso.
+            if (!$courseid) {
+                $message = 'Não existe curso mapeado para a turma onde essa disciplina foi oferecida. trm_id: ' . $discipline->trm_id;
+                throw new \Exception($message);
+            }
+
+            // Pega o numero da ultima section do curso.
+            $lastsection = \local_integracao\entity\section::get_last_section_course($courseid);
 
             // Inicia a transação, qualquer erro que aconteça o rollback será executado.
             $transaction = $DB->start_delegated_transaction();
