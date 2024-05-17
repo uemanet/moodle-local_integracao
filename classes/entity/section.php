@@ -26,7 +26,7 @@ class section {
     public static function get_section_by_ofd_id($ofdid) {
         global $DB;
 
-        return $DB->get_record('int_discipline_section', ['ofd_id' => $ofdid], '*', MUST_EXIST);
+        return $DB->get_record('int_discipline_section', ['ofd_id' => $ofdid], '*');
     }
 
     /**
