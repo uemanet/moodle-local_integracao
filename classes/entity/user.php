@@ -51,10 +51,15 @@ class user {
      * @throws moodle_exception
      */
     public static function save($user) {
-        global $CFG;
+        global $DB, $CFG;
 
         // Inclui a biblioteca de usuários do moodle.
         require_once("{$CFG->dirroot}/user/lib.php");
+        $result = $DB->get_record('user', ['email' => $user->email]);
+
+        if($result){
+            throw new \Exception("Este email já está cadastrado no moodle. Id:" . $result->id);
+        }
 
         // Cria o usuario usando a biblioteca do proprio moodle.
         $user->confirmed = 1;
