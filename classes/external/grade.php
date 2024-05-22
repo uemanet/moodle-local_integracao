@@ -39,8 +39,6 @@ class grade extends external_api {
      * @throws moodle_exception
      */
     public static function get_grades_batch($grades) {
-        global $DB;
-
         // Validate parameters.
         self::validate_parameters(self::get_grades_batch_parameters(), ['grades' => $grades]);
 

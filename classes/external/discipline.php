@@ -178,7 +178,7 @@ class discipline extends external_api {
      * @throws moodle_exception
      */
     public static function enrol_student_discipline($enrol) {
-        global $CFG, $DB;
+        global $DB;
 
         // Validação dos parametros.
         self::validate_parameters(self::enrol_student_discipline_parameters(), ['enrol' => $enrol]);

@@ -44,7 +44,7 @@ class enrol extends external_api {
      * @return array
      */
     public static function batch_unenrol_student_discipline($batch) {
-        global $CFG, $DB;
+        global $DB;
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -85,8 +85,6 @@ class enrol extends external_api {
      * @return external_function_parameters
      */
     public static function batch_unenrol_student_discipline_parameters() {
-        $innerstructure =
-
         return new external_function_parameters([
             'enrol' => new external_multiple_structure(
                 new external_single_structure([
@@ -117,7 +115,7 @@ class enrol extends external_api {
      * @throws moodle_exception
      */
     public static function unenrol_student_discipline($enrol) {
-        global $CFG, $DB;
+        global $DB;
 
         // Validação dos parametros.
         self::validate_parameters(self::unenrol_student_discipline_parameters(), ['enrol' => $enrol]);

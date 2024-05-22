@@ -141,7 +141,7 @@ class student extends external_api {
      * @throws invalid_parameter_exception
      */
     public static function unenrol_student($student) {
-        global $CFG, $DB;
+        global $DB;
 
         // Validação dos paramêtros.
         self::validate_parameters(self::unenrol_student_parameters(), ['student' => $student]);
