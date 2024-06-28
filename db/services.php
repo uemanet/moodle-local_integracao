@@ -192,6 +192,13 @@ $functions = [
         'description' => 'Map a user',
         'type' => 'write'
     ],
+    'local_integracao_get_user_by_pes_id' => [
+        'classname' => 'local_integracao\external\user',
+        'methodname' => 'get_user_by_pes_id',
+        'classpath' => 'local/integracao/classes/external/user.php',
+        'description' => 'Get a user by pes id',
+        'type' => 'read'
+    ],
     'local_integracao_ping' => [
         'classname' => 'local_integracao\external\ping',
         'methodname' => 'ping',
@@ -227,6 +234,7 @@ $services = [
             'local_integracao_change_teacher',
             'local_integracao_update_user',
             'local_integracao_map_user',
+            'local_integracao_get_user_by_pes_id',
             'local_integracao_get_user',
             'local_integracao_ping'
         ],

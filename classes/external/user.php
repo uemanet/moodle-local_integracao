@@ -201,7 +201,7 @@ class user extends external_api {
 
         $returndata['id'] = $user->id;
         $returndata['status'] = 'success';
-        $returndata['message'] = 'Teste';
+        $returndata['message'] = 'Usuário mapeado com sucesso';
 
         return $returndata;
     }
@@ -234,4 +234,60 @@ class user extends external_api {
             'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao')
         ]);
     }
+
+    /**
+     * Update user params
+     * @return external_function_parameters
+     */
+    public static function get_user_by_pes_id_parameters() {
+        return new external_function_parameters([
+            'user' => new external_single_structure([
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor')
+            ])
+        ]);
+    }
+
+    /**
+     * @param $user
+     * @return mixed
+     * @throws Exception
+     * @throws dml_transaction_exception
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     */
+    public static function get_user_by_pes_id($user) {
+        global $DB;
+
+        self::validate_parameters(self::get_user_by_pes_id_parameters(), ['user' => $user]);
+
+        $mapped = $DB->get_record('int_pessoa_user', ['pes_id' => $user['pes_id']], '*');
+
+        $data['id'] = $mapped->userid;
+        $data['pes_id'] = $mapped->pes_id;
+
+        $returndata['id'] = $user->id;
+        $returndata['status'] = 'success';
+        $returndata['message'] = $mapped ? 'Dados de usuário resgatado com sucesso' : 'Usuário não encontrado';
+        $returndata['data'] = $data;
+
+        return $returndata;
+    }
+
+    /**
+     * Update user return structure
+     * @return external_single_structure
+     */
+    public static function get_user_by_pes_id_returns() {
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id'),
+            'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
+            'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao'),
+            'data' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id do usuário no moodle'),
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor')
+
+            ])
+        ]);
+    }
+
 }
