@@ -242,7 +242,8 @@ class user extends external_api {
     public static function get_user_by_pes_id_parameters() {
         return new external_function_parameters([
             'user' => new external_single_structure([
-                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor')
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa do gestor'),
+                'email' => new external_value(PARAM_TEXT, 'Email do usuário'),
             ])
         ]);
     }
@@ -257,20 +258,45 @@ class user extends external_api {
      */
     public static function get_user_by_pes_id($user) {
         global $DB;
-
+    
         self::validate_parameters(self::get_user_by_pes_id_parameters(), ['user' => $user]);
-
+    
         $mapped = $DB->get_record('int_pessoa_user', ['pes_id' => $user['pes_id']], '*');
-
-        $data['id'] = $mapped->userid;
-        $data['pes_id'] = $mapped->pes_id;
-
-        $returndata['id'] = $user->id;
-        $returndata['status'] = 'success';
-        $returndata['message'] = $mapped ? 'Dados de usuário resgatado com sucesso' : 'Usuário não encontrado';
-        $returndata['data'] = $data;
-
-        return $returndata;
+    
+        if ($mapped) {
+            return [
+                'id' => $mapped->pes_id,
+                'status' => 'success',
+                'message' => 'Dados de usuário resgatado com sucesso',
+                'data' => [
+                    'user_id' => $mapped->userid,
+                    'pes_id' => $mapped->pes_id
+                ]
+            ];
+        }
+    
+        $user_moodle = $DB->get_record('user', ['email' => $user['email']], '*');
+        if ($user_moodle) {
+            return [
+                'id' => null,
+                'status' => 'success',
+                'message' => 'Dados de usuário resgatado com sucesso',
+                'data' => [
+                    'user_id' => $user_moodle->id,
+                    'pes_id' => null
+                ]
+            ];
+        }
+    
+        return [
+            'id' => null,
+            'status' => 'success',
+            'message' => 'Usuário não encontrado',
+            'data' => [
+                'user_id' => null,
+                'pes_id' => null
+            ]
+        ];
     }
 
     /**
@@ -283,9 +309,8 @@ class user extends external_api {
             'status' => new external_value(PARAM_TEXT, 'Status da operacao'),
             'message' => new external_value(PARAM_TEXT, 'Mensagem de retorno da operacao'),
             'data' => new external_single_structure([
-                'id' => new external_value(PARAM_INT, 'Id do usuário no moodle'),
-                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor')
-
+                'pes_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor'),
+                'user_id' => new external_value(PARAM_INT, 'Id da pessoa no gestor')
             ])
         ]);
     }
