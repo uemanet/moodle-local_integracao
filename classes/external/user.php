@@ -277,13 +277,14 @@ class user extends external_api {
     
         $user_moodle = $DB->get_record('user', ['email' => $user['email']], '*');
         if ($user_moodle) {
+            $mapped = $DB->get_record('int_pessoa_user', ['userid' => $user_moodle->id], '*');
             return [
-                'id' => null,
+                'id' => $mapped->pes_id,
                 'status' => 'success',
                 'message' => 'Dados de usuário resgatado com sucesso',
                 'data' => [
                     'user_id' => $user_moodle->id,
-                    'pes_id' => null
+                    'pes_id' => $mapped->pes_id
                 ]
             ];
         }
