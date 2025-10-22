@@ -238,7 +238,7 @@ $services = [
             'local_integracao_get_user',
             'local_integracao_ping'
         ],
-        'restrictedusers' => 0,
+        'restrictedusers' => 1,
         'enabled' => 1
     ]
 ];
